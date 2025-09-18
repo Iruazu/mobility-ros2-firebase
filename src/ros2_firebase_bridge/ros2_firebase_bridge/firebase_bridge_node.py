@@ -70,7 +70,7 @@ class FirebaseBridgeNode(Node):
     def load_config(self) -> Dict[str, Any]:
         """設定ファイルを読み込み"""
         try:
-            config_path = '/workspace/src/ros2_firebase_bridge/config/firebase_config.yaml'
+            config_path = '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge/config/firebase_config.yaml'
 
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
@@ -89,7 +89,7 @@ class FirebaseBridgeNode(Node):
         """デフォルト設定を返す"""
         return {
             'firebase': {
-                'service_account_key': '/workspace/config/serviceAccountKey.json'
+                'service_account_key': '/workspaces/mobility-ros2-firebase/config/serviceAccountKey.json'
             },
             'ros2': {
                 'robot_namespace': '/turtlebot3',
@@ -124,14 +124,14 @@ class FirebaseBridgeNode(Node):
                 callback_group=self.callback_group
             )
 
-            # オドメトリサブスクライバー（ロボット位置取得）
-            self.odom_subscriber = self.create_subscription(
-                Odometry,
-                '/odom',
-                self.odom_callback,
-                10,
-                callback_group=self.callback_group
-            )
+            # オドメトリサブスクライバー（ロボット位置取得）- 無限ループ防止のため一時的に無効化
+            # self.odom_subscriber = self.create_subscription(
+            #     Odometry,
+            #     '/odom',
+            #     self.odom_callback,
+            #     10,
+            #     callback_group=self.callback_group
+            # )
 
             # 初期位置サブスクライバー（ロボット初期位置取得）
             self.initialpose_subscriber = self.create_subscription(
@@ -150,7 +150,7 @@ class FirebaseBridgeNode(Node):
                 callback_group=self.callback_group
             )
 
-            self.get_logger().info("✅ ROS2インターフェース設定完了")
+            self.get_logger().info("✅ ROS2インターフェース設定完了（オドメトリは無効化中）")
 
         except Exception as e:
             self.get_logger().error(f"ROS2インターフェース設定エラー: {e}")
@@ -339,35 +339,26 @@ class FirebaseBridgeNode(Node):
             self.get_logger().error(f"ナビゲーション結果処理エラー: {e}")
 
     def odom_callback(self, msg: Odometry):
-        """オドメトリコールバック（ロボット位置更新）"""
+        """オドメトリコールバック（ロボット位置更新）- 無限ループ防止のため無効化"""
         try:
-            # マップ座標をGPS座標に変換
+            # 無限ループ防止のため、Firebase更新を完全に無効化
+            # デバッグ用ログのみ出力
             x = msg.pose.pose.position.x
             y = msg.pose.pose.position.y
 
+            # GPS座標変換テスト（Firebase更新なし）
             gps_coords = self.coordinate_converter.map_to_gps_coordinates(x, y)
 
-            # 現在のロボットIDを取得（実際の実装では適切に設定）
-            robot_id = self.get_current_robot_id()
+            # デバッグログ（10秒に1回のみ）
+            current_time = time.time()
+            if not hasattr(self, '_last_debug_time'):
+                self._last_debug_time = 0
 
-            if robot_id and self.firebase_client:
-                # 位置更新の頻度を制御（1秒に1回程度）
-                if not hasattr(self, '_last_position_update'):
-                    self._last_position_update = {}
+            if current_time - self._last_debug_time > 10.0:
+                self.get_logger().info(f"位置情報デバッグ（Firebase更新なし）: Map({x:.2f}, {y:.2f}) -> GPS({gps_coords['lat']:.6f}, {gps_coords['lng']:.6f})")
+                self._last_debug_time = current_time
 
-                current_time = time.time()
-                if (robot_id not in self._last_position_update or
-                    current_time - self._last_position_update[robot_id] > 1.0):
-
-                    # Firestoreに位置を更新
-                    current_status = self.robot_states.get(robot_id, {}).get('status', '走行中')
-                    self.firebase_client.update_robot_status(
-                        robot_id,
-                        gps_coords,
-                        current_status
-                    )
-
-                    self._last_position_update[robot_id] = current_time
+            # Firebase更新は完全に無効化（無限ループ防止）
 
         except Exception as e:
             self.get_logger().error(f"オドメトリ処理エラー: {e}")
@@ -377,19 +368,19 @@ class FirebaseBridgeNode(Node):
         try:
             self.get_logger().info("ロボット初期位置が設定されました")
 
-            # 初期位置もFirestoreに反映する場合
-            x = msg.pose.pose.position.x
-            y = msg.pose.pose.position.y
+            # 初期位置もFirestoreに反映する場合（必要に応じてコメントアウト）
+            # x = msg.pose.pose.position.x
+            # y = msg.pose.pose.position.y
 
-            gps_coords = self.coordinate_converter.map_to_gps_coordinates(x, y)
-            robot_id = self.get_current_robot_id()
+            # gps_coords = self.coordinate_converter.map_to_gps_coordinates(x, y)
+            # robot_id = self.get_current_robot_id()
 
-            if robot_id and self.firebase_client:
-                self.firebase_client.update_robot_status(
-                    robot_id,
-                    gps_coords,
-                    'アイドリング中'
-                )
+            # if robot_id and self.firebase_client:
+            #     self.firebase_client.update_robot_status(
+            #         robot_id,
+            #         gps_coords,
+            #         'アイドリング中'
+            #     )
 
         except Exception as e:
             self.get_logger().error(f"初期位置処理エラー: {e}")
@@ -405,25 +396,25 @@ class FirebaseBridgeNode(Node):
             self.get_logger().error(f"ステータス発行エラー: {e}")
 
     def get_current_robot_id(self) -> Optional[str]:
-    """現在のロボットIDを取得"""
-    # Firestoreから利用可能なロボットを動的取得
-    try:
-        if self.firebase_client:
-            robots_ref = self.firebase_client.db.collection('robots')
-            robots = list(robots_ref.stream())
+        """現在のロボットIDを取得"""
+        # Firestoreから利用可能なロボットを動的取得
+        try:
+            if self.firebase_client:
+                robots_ref = self.firebase_client.db.collection('robots')
+                robots = list(robots_ref.stream())
 
-            if robots:
-                # 最初に見つかったロボットを使用
-                robot_id = robots[0].id
-                self.get_logger().info(f"使用ロボットID: {robot_id}")
-                return robot_id
-            else:
-                self.get_logger().warning("利用可能なロボットが見つかりません")
-                return None
-    except Exception as e:
-        self.get_logger().error(f"ロボットID取得エラー: {e}")
+                if robots:
+                    # 最初に見つかったロボットを使用
+                    robot_id = robots[0].id
+                    self.get_logger().info(f"使用ロボットID: {robot_id}")
+                    return robot_id
+                else:
+                    self.get_logger().warning("利用可能なロボットが見つかりません")
+                    return None
+        except Exception as e:
+            self.get_logger().error(f"ロボットID取得エラー: {e}")
 
-    return "robot_001"  # フォールバック
+        return "robot_001"  # フォールバック
 
     def shutdown(self):
         """シャットダウン処理"""

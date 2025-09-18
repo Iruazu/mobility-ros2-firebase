@@ -70,7 +70,7 @@ class FirebaseBridgeNode(Node):
     def load_config(self) -> Dict[str, Any]:
         """設定ファイルを読み込み"""
         try:
-            config_path = '/workspace/src/ros2_firebase_bridge/config/firebase_config.yaml'
+            config_path = '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge/config/firebase_config.yaml'
 
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
@@ -89,7 +89,7 @@ class FirebaseBridgeNode(Node):
         """デフォルト設定を返す"""
         return {
             'firebase': {
-                'service_account_key': '/workspace/config/serviceAccountKey.json'
+                'service_account_key': '/workspaces/mobility-ros2-firebase/config/serviceAccountKey.json'
             },
             'ros2': {
                 'robot_namespace': '/turtlebot3',
@@ -347,27 +347,47 @@ class FirebaseBridgeNode(Node):
 
             gps_coords = self.coordinate_converter.map_to_gps_coordinates(x, y)
 
-            # 現在のロボットIDを取得（実際の実装では適切に設定）
+            # 現在のロボットIDを取得
             robot_id = self.get_current_robot_id()
 
             if robot_id and self.firebase_client:
-                # 位置更新の頻度を制御（1秒に1回程度）
+                # 位置更新の頻度を制御（5秒に1回に変更 + 最小移動距離チェック）
                 if not hasattr(self, '_last_position_update'):
                     self._last_position_update = {}
+                    self._last_position = {}
 
                 current_time = time.time()
+
+                # 前回の位置との距離チェック
+                if robot_id in self._last_position:
+                    prev_x, prev_y = self._last_position[robot_id]
+                    distance_moved = ((x - prev_x)**2 + (y - prev_y)**2)**0.5
+                    min_distance = 0.1  # 10cm以上移動した場合のみ更新
+                else:
+                    distance_moved = float('inf')  # 初回は必ず更新
+
+                # 時間間隔チェック（5秒間隔）+ 最小移動距離チェック
                 if (robot_id not in self._last_position_update or
-                    current_time - self._last_position_update[robot_id] > 1.0):
+                    current_time - self._last_position_update[robot_id] > 5.0) and \
+                   distance_moved > 0.1:
 
-                    # Firestoreに位置を更新
+                    # ロボットが実際に移動中の場合のみFirestoreを更新
                     current_status = self.robot_states.get(robot_id, {}).get('status', '走行中')
-                    self.firebase_client.update_robot_status(
-                        robot_id,
-                        gps_coords,
-                        current_status
-                    )
 
-                    self._last_position_update[robot_id] = current_time
+                    # アイドリング中は位置更新をスキップ（無限ループ防止）
+                    if current_status not in ['アイドリング中']:
+                        self.firebase_client.update_robot_status(
+                            robot_id,
+                            gps_coords,
+                            current_status
+                        )
+
+                        self._last_position_update[robot_id] = current_time
+                        self._last_position[robot_id] = (x, y)
+
+                        self.get_logger().debug(f"位置更新: {robot_id} -> ({gps_coords['lat']:.6f}, {gps_coords['lng']:.6f})")
+                    else:
+                        self.get_logger().debug(f"アイドリング中のため位置更新スキップ: {robot_id}")
 
         except Exception as e:
             self.get_logger().error(f"オドメトリ処理エラー: {e}")
@@ -406,13 +426,24 @@ class FirebaseBridgeNode(Node):
 
     def get_current_robot_id(self) -> Optional[str]:
         """現在のロボットIDを取得"""
-        # 実際の実装では、以下の方法でロボットIDを特定する必要があります：
-        # 1. 起動パラメータから取得
-        # 2. robot_descriptionから取得
-        # 3. 固定値として設定
+        # Firestoreから利用可能なロボットを動的取得
+        try:
+            if self.firebase_client:
+                robots_ref = self.firebase_client.db.collection('robots')
+                robots = list(robots_ref.stream())
 
-        # 今回はテスト用に固定値を返す
-        return "robot_001"  # 実装時は適切に変更してください
+                if robots:
+                    # 最初に見つかったロボットを使用
+                    robot_id = robots[0].id
+                    self.get_logger().info(f"使用ロボットID: {robot_id}")
+                    return robot_id
+                else:
+                    self.get_logger().warning("利用可能なロボットが見つかりません")
+                    return None
+        except Exception as e:
+            self.get_logger().error(f"ロボットID取得エラー: {e}")
+
+        return "robot_001"  # フォールバック
 
     def shutdown(self):
         """シャットダウン処理"""

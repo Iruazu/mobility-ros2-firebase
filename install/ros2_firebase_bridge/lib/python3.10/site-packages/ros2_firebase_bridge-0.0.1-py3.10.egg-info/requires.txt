@@ -1,3 +1,4 @@
+PyYAML
 firebase-admin
 google-cloud-firestore
 setuptools

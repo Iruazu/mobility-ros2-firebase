@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 package_name = 'ros2_firebase_bridge'
 
 setup(
     name=package_name,
     version='0.0.1',
-    packages=[package_name],  # find_packages() → [package_name] に変更
+    packages=find_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -17,6 +17,7 @@ setup(
         'firebase-admin',
         'google-cloud-firestore',
         'tf-transformations',
+        'PyYAML',
     ],
     zip_safe=True,
     maintainer='Developer',

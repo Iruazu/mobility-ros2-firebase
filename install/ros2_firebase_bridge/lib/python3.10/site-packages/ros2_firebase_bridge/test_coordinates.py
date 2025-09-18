@@ -1,42 +1,9 @@
+# test_coordinates.pyの内容を確認・修正
+cat > src/ros2_firebase_bridge/ros2_firebase_bridge/test_coordinates.py << 'EOF'
 #!/usr/bin/env python3
 """座標変換テスト - パッケージ版"""
 
 from .coordinate_converter import CoordinateConverter
-
-def main():
-    test_coordinate_conversion()
-
-# 既存のtest_coordinate_conversion関数はそのまま#!/usr/bin/env python3
-"""座標変換テスト"""
-
-import math
-
-class CoordinateConverter:
-    def __init__(self, origin_lat=36.5598, origin_lng=139.9088):
-        self.origin_lat = origin_lat
-        self.origin_lng = origin_lng
-        print(f"座標系原点: ({origin_lat}, {origin_lng})")
-
-    def gps_to_map_coordinates(self, lat, lng):
-        """GPS座標をROS2マップ座標系に変換"""
-        R = 6371000  # 地球半径(m)
-
-        dlat = math.radians(lat - self.origin_lat)
-        dlng = math.radians(lng - self.origin_lng)
-
-        x = dlng * R * math.cos(math.radians(self.origin_lat))
-        y = dlat * R
-
-        return {'x': x, 'y': y}
-
-    def map_to_gps_coordinates(self, x, y):
-        """ROS2マップ座標をGPS座標に変換"""
-        R = 6371000
-
-        lat = self.origin_lat + math.degrees(y / R)
-        lng = self.origin_lng + math.degrees(x / (R * math.cos(math.radians(self.origin_lat))))
-
-        return {'lat': lat, 'lng': lng}
 
 def test_coordinate_conversion():
     print("🧭 座標変換テストを開始します...\n")
@@ -76,5 +43,9 @@ def test_coordinate_conversion():
 
     print("✅ 座標変換テスト完了")
 
-if __name__ == "__main__":
+def main():
     test_coordinate_conversion()
+
+if __name__ == "__main__":
+    main()
+EOF
