@@ -1,0 +1,15 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.flake8",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json",
+        "streetsidesoftware.code-spell-checker",
+        "ms-python.debugpy",
+        "ms-vscode-remote.remote-containers",
+        "twxs.cmake",
+        "ms-vscode.makefile-tools"
+    ]
+}

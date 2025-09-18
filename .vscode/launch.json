@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Firebase Bridge Node Debug",
+            "type": "python",
+            "request": "launch",
+            "program": "/workspace/src/ros2_firebase_bridge/ros2_firebase_bridge/firebase_bridge_node.py",
+            "console": "integratedTerminal",
+            "cwd": "/workspace",
+            "env": {
+                "PYTHONPATH": "/workspace/install/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages"
+            },
+            "args": []
+        },
+        {
+            "name": "ROS2 Launch Debug",
+            "type": "python",
+            "request": "launch",
+            "program": "/opt/ros/humble/bin/ros2",
+            "args": [
+                "run",
+                "ros2_firebase_bridge",
+                "firebase_bridge"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "/workspace"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+firebase:
+  service_account_key: "/workspace/config/serviceAccountKey.json"
+  database_url: "https://mobility-map-ae58e.firebaseio.com"
+
+ros2:
+  robot_namespace: "/turtlebot3"
+  goal_topic: "/goal_pose"
+  odom_topic: "/odom"
+  status_topic: "/robot_status"
+
+coordinate_system:
+  origin_latitude: 36.5598
+  origin_longitude: 139.9088
+  map_frame: "map"
+  base_frame: "base_link"

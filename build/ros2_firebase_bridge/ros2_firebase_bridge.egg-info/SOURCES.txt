@@ -1,0 +1,16 @@
+package.xml
+setup.py
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/PKG-INFO
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/dependency_links.txt
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/entry_points.txt
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
+../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/zip-safe
+config/firebase_config.yaml
+resource/ros2_firebase_bridge
+ros2_firebase_bridge/__init__.py
+ros2_firebase_bridge/coordinate_converter.py
+ros2_firebase_bridge/firebase_bridge_node.py
+ros2_firebase_bridge/firebase_client.py
+ros2_firebase_bridge/test_coordinates.py

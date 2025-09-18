@@ -1,0 +1,4 @@
+firebase-admin
+google-cloud-firestore
+setuptools
+tf-transformations

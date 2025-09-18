@@ -1,0 +1,3 @@
+# Gitの追跡対象から外すファイルやディレクトリを記述します
+# 秘密情報ファイル
+config/serviceAccountKey.json
