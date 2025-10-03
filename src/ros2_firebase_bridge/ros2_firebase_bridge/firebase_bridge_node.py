@@ -1,477 +1,476 @@
 #!/usr/bin/env python3
-"""Firebase-ROS2 Bridge メインノード"""
+"""
+Enhanced Firebase-ROS2 Bridge - Complete end-to-end integration
+Replaces the existing firebase_bridge_node.py
+"""
 
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.action import ActionClient
+from tf_transformations import euler_from_quaternion # Quaternion to Yaw 変換用
 
-# ROS2メッセージ型
+# ROS2 Messages
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import LaserScan, BatteryState
 from std_msgs.msg import String
 from nav2_msgs.action import NavigateToPose
 from action_msgs.msg import GoalStatus
 
-# アクション関連
-from rclpy.action import ActionClient
-
+# Custom modules
+# 🚨 インポートパスは ROS2 パッケージ構造に合わせて修正
 from ros2_firebase_bridge.firebase_client import FirebaseClient
 from ros2_firebase_bridge.coordinate_converter import CoordinateConverter
+from ros2_firebase_bridge.state_publisher import StatePublisher, RobotStateTracker
+from ros2_firebase_bridge.sensor_aggregator import SensorAggregator
 
 import yaml
 import os
-import logging
-import threading
 import time
+import math
 from typing import Dict, Any, Optional
 
-class FirebaseBridgeNode(Node):
-    """Firebase-ROS2ブリッジのメインノード"""
+
+class EnhancedFirebaseBridge(Node):
+    """
+    Complete Firebase-ROS2 Bridge with sensor integration and
+    smart state management to prevent infinite loops.
+    """
 
     def __init__(self):
-        super().__init__('firebase_bridge_node')
+        super().__init__('enhanced_firebase_bridge')
 
-        # ロギング設定
-        self.setup_logging()
-
-        # 設定読み込み
+        # Load configuration
         self.config = self.load_config()
 
-        # コールバックグループ設定（並行処理のため）
+        # Callback group for concurrent operations
         self.callback_group = ReentrantCallbackGroup()
 
-        # Firebase接続
+        # Core components (will be initialized after Firebase connection)
         self.firebase_client = None
         self.coordinate_converter = None
+        self.state_publisher = None
+        self.state_tracker = None
+        self.sensor_aggregator = None
 
-        # ROS2通信設定
+        # Robot state
+        self.robot_id = "robot_001"
+        self.current_goal = None # GPS Coordinates (from Firebase)
+        self.navigation_active = False
+        self.goal_handle = None # Nav2 Action Goal Handle
+
+        # Setup ROS2 interfaces (Subscribers are set up here, callbacks are run later)
         self.setup_ros2_interfaces()
 
-        # 状態管理
-        self.robot_states = {}  # ロボット状態を追跡
-        self.active_navigation = {}  # アクティブなナビゲーション
-
-        # Firebase初期化（非同期）
+        # Initialize Firebase (async retry timer)
         self.firebase_init_timer = self.create_timer(
-            1.0, self.initialize_firebase, callback_group=self.callback_group
+            1.0,
+            self.initialize_firebase,
+            callback_group=self.callback_group
         )
 
-        self.get_logger().info("🚀 Firebase Bridge Node が開始されました")
-
-    def setup_logging(self):
-        """ロギングを設定"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.get_logger().info("🚀 Enhanced Firebase Bridge started")
 
     def load_config(self) -> Dict[str, Any]:
-        """設定ファイルを読み込み"""
+        """Load configuration from YAML file."""
+        # ... (設定ファイル読み込みロジックはそのまま利用)
         try:
-            config_path = '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge/config/firebase_config.yaml'
+            config_path = os.path.join(
+                os.path.dirname(__file__),
+                '../config/firebase_config.yaml'
+            )
 
             if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
-                    config = yaml.safe_load(f)
-                self.get_logger().info(f"設定ファイル読み込み完了: {config_path}")
-                return config
+                    return yaml.safe_load(f)
             else:
-                self.get_logger().warning(f"設定ファイルが見つかりません: {config_path}")
                 return self.get_default_config()
 
         except Exception as e:
-            self.get_logger().error(f"設定ファイル読み込みエラー: {e}")
+            self.get_logger().error(f"Config load error: {e}")
             return self.get_default_config()
 
     def get_default_config(self) -> Dict[str, Any]:
-        """デフォルト設定を返す"""
+        """Return default configuration."""
         return {
             'firebase': {
-                'service_account_key': '/workspaces/mobility-ros2-firebase/config/serviceAccountKey.json'
+                'service_account_key': '/workspace/config/serviceAccountKey.json'
             },
             'ros2': {
                 'robot_namespace': '/turtlebot3',
                 'goal_topic': '/goal_pose',
                 'odom_topic': '/odom',
-                'status_topic': '/robot_status'
+                'scan_topic': '/scan',
+                'battery_topic': '/battery_state'
             },
             'coordinate_system': {
                 'origin_latitude': 36.5598,
                 'origin_longitude': 139.9088,
-                'map_frame': 'map',
-                'base_frame': 'base_link'
+                'map_frame': 'map'
             }
         }
 
     def setup_ros2_interfaces(self):
-        """ROS2のパブリッシャー・サブスクライバーを設定"""
+        """Setup all ROS2 publishers and subscribers."""
         try:
-            # ゴール位置のパブリッシャー
+            # Publishers (Topics)
             self.goal_publisher = self.create_publisher(
-                PoseStamped,
-                '/goal_pose',
-                10,
-                callback_group=self.callback_group
+                PoseStamped, '/goal_pose', 10, callback_group=self.callback_group
             )
 
-            # Navigation2アクションクライアント
+            # Navigation2 Action Client (Action)
             self.nav_action_client = ActionClient(
-                self,
-                NavigateToPose,
-                '/navigate_to_pose',
-                callback_group=self.callback_group
+                self, NavigateToPose, '/navigate_to_pose', callback_group=self.callback_group
             )
 
-            # オドメトリサブスクライバー（ロボット位置取得）- 無限ループ防止のため一時的に無効化
-            # self.odom_subscriber = self.create_subscription(
-            #     Odometry,
-            #     '/odom',
-            #     self.odom_callback,
-            #     10,
-            #     callback_group=self.callback_group
-            # )
-
-            # 初期位置サブスクライバー（ロボット初期位置取得）
-            self.initialpose_subscriber = self.create_subscription(
-                PoseWithCovarianceStamped,
-                '/initialpose',
-                self.initialpose_callback,
-                10,
-                callback_group=self.callback_group
+            # Subscribers (Odom is the main trigger for state updates)
+            self.odom_subscriber = self.create_subscription(
+                Odometry, '/odom', self.odom_callback, 10, callback_group=self.callback_group
             )
 
-            # ステータスパブリッシャー
-            self.status_publisher = self.create_publisher(
-                String,
-                '/robot_status',
-                10,
-                callback_group=self.callback_group
-            )
+            # 🚨 Note: Scan and Battery subscribers are now handled by SensorAggregator
 
-            self.get_logger().info("✅ ROS2インターフェース設定完了（オドメトリは無効化中）")
+            self.get_logger().info("✅ ROS2 interfaces configured")
 
         except Exception as e:
-            self.get_logger().error(f"ROS2インターフェース設定エラー: {e}")
+            self.get_logger().error(f"ROS2 interface setup error: {e}")
 
     def initialize_firebase(self):
-        """Firebase接続を初期化"""
+        """Initialize Firebase connection and core components."""
         try:
-            if self.firebase_client is None:
-                service_account_path = self.config['firebase']['service_account_key']
+            if self.firebase_client is not None:
+                return  # Already initialized
 
-                # Firebase接続
-                self.firebase_client = FirebaseClient(service_account_path, self.logger)
+            service_account_path = self.config['firebase']['service_account_key']
 
-                # 座標変換器初期化
-                coord_config = self.config['coordinate_system']
-                self.coordinate_converter = CoordinateConverter(
-                    origin_lat=coord_config['origin_latitude'],
-                    origin_lng=coord_config['origin_longitude'],
-                    logger=self.logger
-                )
+            # Initialize Firebase client
+            self.firebase_client = FirebaseClient(service_account_path, self.get_logger())
 
-                # Firestoreリアルタイム監視開始
-                self.firebase_client.setup_realtime_listener(
-                    'robots',
-                    self.on_firestore_robot_update
-                )
+            # Initialize coordinate converter
+            coord_config = self.config['coordinate_system']
+            self.coordinate_converter = CoordinateConverter(
+                origin_lat=coord_config['origin_latitude'],
+                origin_lng=coord_config['origin_longitude'],
+                logger=self.get_logger()
+            )
 
-                self.get_logger().info("🔥 Firebase接続完了 - リアルタイム監視開始")
+            # Initialize state publisher (with smart filtering)
+            self.state_publisher = StatePublisher(
+                self.firebase_client, self.coordinate_converter, self.get_logger()
+            )
 
-                # 初期化タイマーを停止
-                self.firebase_init_timer.cancel()
+            # Initialize state tracker
+            self.state_tracker = RobotStateTracker(self, self.state_publisher)
+
+            # 🚀 Initialize sensor aggregator (FIX: Passing robot_id)
+            self.sensor_aggregator = SensorAggregator(
+                self, self.robot_id, self.firebase_client, self.get_logger()
+            )
+
+            # Setup Firestore listener (FIX: Using correct arguments)
+            self.firebase_client.setup_realtime_listener(
+                'robots', self.on_firestore_update
+            )
+
+            # Initial setup in Firebase
+            self.initialize_robot_in_firebase()
+
+            self.get_logger().info("🔥 Firebase connection established")
+
+            # Start telemetry timer only after successful init
+            self.telemetry_timer = self.create_timer(
+                self.sensor_aggregator.publish_interval,
+                self.sensor_aggregator.publish_telemetry_check,
+                callback_group=self.callback_group
+            )
+
+            # Stop initialization timer
+            self.firebase_init_timer.cancel()
 
         except Exception as e:
-            self.get_logger().error(f"Firebase初期化エラー: {e}")
-            # 5秒後に再試行
-            time.sleep(5.0)
+            self.get_logger().error(f"Firebase initialization error: {e}")
 
-    def on_firestore_robot_update(self, robot_id: str, robot_data: Dict[str, Any], change_type: str):
-        """Firestoreのロボットデータ更新時のコールバック"""
+    def initialize_robot_in_firebase(self):
+        """Ensure robot document exists in Firebase with initial data."""
+        # ... (初期データ設定ロジックはそのまま利用)
         try:
-            self.get_logger().info(f"🔄 Firestore更新検知: {robot_id} ({change_type})")
+            robot_data = self.firebase_client.get_robot_data(self.robot_id)
 
-            # 前回の状態と比較
-            prev_state = self.robot_states.get(robot_id, {})
-            self.robot_states[robot_id] = robot_data
+            if robot_data is None:
+                from firebase_admin import firestore
+                initial_data = {
+                    'id': self.robot_id,
+                    'name': 'TurtleBot3 Alpha',
+                    'status': 'idle',
+                    'position': firestore.GeoPoint( # 🚨 GeoPoint を使用
+                        self.config['coordinate_system']['origin_latitude'],
+                        self.config['coordinate_system']['origin_longitude']
+                    ),
+                    'heading': 0.0,
+                    'telemetry': {
+                        'battery_percent': 100.0,
+                        'speed': 0.0,
+                        'distance_to_goal': None,
+                        'obstacle_detected': False
+                    }
+                }
 
-            # 目的地が設定された場合の処理
-            if self.should_send_navigation_goal(robot_data, prev_state):
-                self.send_navigation_goal(robot_id, robot_data)
+                self.firebase_client.db.collection('robots').document(
+                    self.robot_id
+                ).set(initial_data)
 
-            # ステータス変更の通知
-            if robot_data.get('status') != prev_state.get('status'):
-                self.publish_robot_status(robot_id, robot_data.get('status', 'unknown'))
+                self.get_logger().info(f"✅ Initialized robot {self.robot_id} in Firebase")
 
         except Exception as e:
-            self.get_logger().error(f"Firestore更新処理エラー: {e}")
+            self.get_logger().error(f"Robot initialization error: {e}")
 
-    def should_send_navigation_goal(self, current_data: Dict[str, Any],
-                                  prev_data: Dict[str, Any]) -> bool:
-        """ナビゲーションゴールを送信すべきかどうか判定"""
+    # ============================================================
+    # FIRESTORE CALLBACKS (Firebase → ROS2)
+    # ============================================================
+
+    def on_firestore_update(self, robot_id: str, robot_data: Dict[str, Any], change_type: str):
+        """Handle Firestore updates - send commands to ROS2."""
         try:
-            # 目的地が設定されているか
-            if 'destination' not in current_data:
-                return False
+            if robot_id != self.robot_id:
+                return  # Only handle our robot
 
-            # 適切なステータスかどうか
-            valid_statuses = ['配車中', '走行中']
-            if current_data.get('status') not in valid_statuses:
-                return False
+            self.get_logger().info(f"📨 Firestore update: {robot_id} - {change_type}")
 
-            # 前回と目的地が変わったかどうか
-            current_dest = current_data['destination']
-            prev_dest = prev_data.get('destination')
+            # Check if destination changed (Firebase → ROS2 Command)
+            if 'destination' in robot_data and robot_data['destination']:
+                destination = robot_data['destination']
 
-            if prev_dest is None:
-                return True  # 新しく目的地が設定された
+                # Check if this is a new destination
+                if self.should_navigate_to(destination):
+                    self.send_navigation_goal(destination)
 
-            # 座標が変わったかチェック
-            if (abs(current_dest.latitude - prev_dest.latitude) > 0.00001 or
-                abs(current_dest.longitude - prev_dest.longitude) > 0.00001):
-                return True
-
-            return False
+            # Handle status changes (e.g., Web App sends 'stop')
+            status = robot_data.get('status', 'unknown')
+            if status == 'stop':
+                self.cancel_navigation()
 
         except Exception as e:
-            self.get_logger().error(f"ナビゲーション判定エラー: {e}")
-            return False
+            self.get_logger().error(f"Firestore update handler error: {e}")
 
-    def send_navigation_goal(self, robot_id: str, robot_data: Dict[str, Any]):
-        """ROS2にナビゲーションゴールを送信"""
+    def should_navigate_to(self, destination) -> bool:
+        """Check if we should send a new navigation goal."""
+        # ... (ロジックはそのまま利用)
+        if not self.navigation_active:
+            return True
+
+        if self.current_goal:
+            # Assume destination is a GeoPoint object from Firestore.
+            current_lat = self.current_goal.latitude
+            current_lng = self.current_goal.longitude
+            new_lat = destination.latitude
+            new_lng = destination.longitude
+
+            # If moved more than 1 meter, it's a new goal
+            distance = self.coordinate_converter.calculate_distance(
+                current_lat, current_lng, new_lat, new_lng
+            )
+
+            return distance > 1.0
+
+        return True
+
+    def send_navigation_goal(self, destination):
+        """Send navigation goal to ROS2 Navigation2."""
         try:
-            destination = robot_data['destination']
             self.get_logger().info(
-                f"🎯 ナビゲーションゴール送信: {robot_id} → "
+                f"🎯 Sending navigation goal: "
                 f"({destination.latitude:.6f}, {destination.longitude:.6f})"
             )
 
-            # PoseStampedメッセージ作成
+            # Create PoseStamped message
             goal_pose = self.coordinate_converter.create_pose_stamped(
-                destination.latitude,
-                destination.longitude,
-                frame_id='map'
+                destination.latitude, destination.longitude, frame_id='map'
             )
 
-            # 2つの方法でゴールを送信
-
-            # 1. 簡単なgoal_poseトピックに発行（RViz用）
+            # Publish to /goal_pose (for RViz visualization)
             self.goal_publisher.publish(goal_pose)
 
-            # 2. Navigation2アクションに送信
-            if self.nav_action_client.wait_for_server(timeout_sec=1.0):
-                self.send_nav2_action_goal(robot_id, goal_pose)
+            # Send to Navigation2 action server
+            if self.nav_action_client.wait_for_server(timeout_sec=2.0):
+                goal_msg = NavigateToPose.Goal()
+                goal_msg.pose = goal_pose
+
+                future = self.nav_action_client.send_goal_async(
+                    goal_msg,
+                    feedback_callback=self.nav_feedback_callback
+                )
+
+                future.add_done_callback(self.nav_goal_response_callback)
+
+                self.current_goal = destination
+                self.navigation_active = True
             else:
-                self.get_logger().warning("Navigation2アクションサーバーが利用できません")
+                self.get_logger().warning("Navigation2 action server not available")
 
         except Exception as e:
-            self.get_logger().error(f"ナビゲーションゴール送信エラー: {e}")
+            self.get_logger().error(f"Navigation goal send error: {e}")
 
-    def send_nav2_action_goal(self, robot_id: str, goal_pose: PoseStamped):
-        """Navigation2アクションゴールを送信"""
+    def cancel_navigation(self):
+        """Cancel current navigation."""
         try:
-            goal_msg = NavigateToPose.Goal()
-            goal_msg.pose = goal_pose
-
-            # アクション送信
-            future = self.nav_action_client.send_goal_async(
-                goal_msg,
-                feedback_callback=lambda feedback: self.navigation_feedback_callback(robot_id, feedback)
-            )
-
-            future.add_done_callback(
-                lambda f: self.navigation_goal_response_callback(robot_id, f)
-            )
-
-            self.active_navigation[robot_id] = future
+            if self.goal_handle: # Check if a goal handle exists
+                self.get_logger().info("🛑 Cancelling navigation")
+                cancel_future = self.goal_handle.cancel_goal_async()
+                cancel_future.add_done_callback(
+                    lambda f: self.get_logger().info("Navigation goal cancelled.")
+                )
+            self.navigation_active = False
+            self.current_goal = None
+            self.goal_handle = None
+            self.firebase_client.update_robot_state(self.robot_id, {'status': 'idle'}) # Update status
 
         except Exception as e:
-            self.get_logger().error(f"Nav2アクションゴール送信エラー: {e}")
+            self.get_logger().error(f"Navigation cancel error: {e}")
 
-    def navigation_goal_response_callback(self, robot_id: str, future):
-        """Navigation2ゴール応答コールバック"""
+    # --- Navigation2 Action Callbacks ---
+
+    def nav_goal_response_callback(self, future):
+        """Handle Navigation2 goal response."""
         try:
             goal_handle = future.result()
+
             if not goal_handle.accepted:
-                self.get_logger().error(f"ナビゲーションゴールが拒否されました: {robot_id}")
+                self.get_logger().error("Navigation goal rejected")
+                self.navigation_active = False
+                self.current_goal = None
                 return
 
-            self.get_logger().info(f"ナビゲーションゴール受付: {robot_id}")
+            self.get_logger().info("✅ Navigation goal accepted")
+            self.goal_handle = goal_handle # Store goal handle for cancellation
 
-            # 結果を待機
+            # Wait for result
             result_future = goal_handle.get_result_async()
-            result_future.add_done_callback(
-                lambda f: self.navigation_result_callback(robot_id, f)
-            )
+            result_future.add_done_callback(self.nav_result_callback)
 
         except Exception as e:
-            self.get_logger().error(f"ナビゲーションゴール応答エラー: {e}")
+            self.get_logger().error(f"Nav goal response error: {e}")
 
-    def navigation_feedback_callback(self, robot_id: str, feedback):
-        """Navigation2フィードバックコールバック"""
+    def nav_feedback_callback(self, feedback_msg):
+        """Handle Navigation2 feedback (distance to goal)."""
         try:
-            # フィードバックから現在位置を取得（必要に応じて）
-            current_pose = feedback.feedback.current_pose
-            self.get_logger().debug(f"ナビゲーション進行中: {robot_id}")
+            # Feedback is primarily handled by SensorAggregator via Odom callback
+            pass
 
         except Exception as e:
-            self.get_logger().error(f"ナビゲーションフィードバックエラー: {e}")
+            self.get_logger().error(f"Nav feedback error: {e}")
 
-    def navigation_result_callback(self, robot_id: str, future):
-        """Navigation2結果コールバック"""
+    def nav_result_callback(self, future):
+        """Handle Navigation2 result (Success/Failure)."""
         try:
-            result = future.result()
+            result = future.result().result
+            status = future.result().status
 
-            if result.status == GoalStatus.STATUS_SUCCEEDED:
-                self.get_logger().info(f"🎉 ナビゲーション完了: {robot_id}")
-                # Firestoreのステータスを更新（必要に応じて）
+            if status == GoalStatus.STATUS_SUCCEEDED:
+                self.get_logger().info("🎉 Navigation completed successfully")
+
+                # 🚀 FIX: Update Firebase status and clear destination
+                self.firebase_client.update_robot_state(
+                    self.robot_id,
+                    {'status': 'idle', 'destination': firestore.DELETE_FIELD}
+                )
 
             else:
-                self.get_logger().warning(f"ナビゲーション失敗: {robot_id}, ステータス: {result.status}")
+                self.get_logger().warning(f"Navigation failed with status: {status}")
+                self.firebase_client.update_robot_state(
+                    self.robot_id,
+                    {'status': 'idle'} # Reset to idle on failure
+                )
 
-            # アクティブナビゲーションから削除
-            if robot_id in self.active_navigation:
-                del self.active_navigation[robot_id]
+            self.navigation_active = False
+            self.current_goal = None
+            self.goal_handle = None
 
         except Exception as e:
-            self.get_logger().error(f"ナビゲーション結果処理エラー: {e}")
+            self.get_logger().error(f"Nav result error: {e}")
+
+    # ============================================================
+    # ROS2 SENSOR CALLBACKS (ROS2 → Firebase)
+    # ============================================================
 
     def odom_callback(self, msg: Odometry):
-        """オドメトリコールバック（ロボット位置更新）- 無限ループ防止のため無効化"""
+        """
+        Handle odometry updates - trigger smart filtering and aggregation.
+        """
+        if self.state_tracker is None: return
+
         try:
-            # 無限ループ防止のため、Firebase更新を完全に無効化
-            # デバッグ用ログのみ出力
-            x = msg.pose.pose.position.x
-            y = msg.pose.pose.position.y
+            # 1. Update StateTracker (triggers smart Firebase position update)
+            self.state_tracker.update_from_odom(self.robot_id, msg)
 
-            # GPS座標変換テスト（Firebase更新なし）
-            gps_coords = self.coordinate_converter.map_to_gps_coordinates(x, y)
+            # 2. Update Sensor Aggregator (speed and navigation state)
+            speed = math.sqrt(
+                msg.twist.twist.linear.x**2 + msg.twist.twist.linear.y**2
+            )
 
-            # デバッグログ（10秒に1回のみ）
-            current_time = time.time()
-            if not hasattr(self, '_last_debug_time'):
-                self._last_debug_time = 0
+            self.sensor_aggregator.update_motion_state(speed)
 
-            if current_time - self._last_debug_time > 10.0:
-                self.get_logger().info(f"位置情報デバッグ（Firebase更新なし）: Map({x:.2f}, {y:.2f}) -> GPS({gps_coords['lat']:.6f}, {gps_coords['lng']:.6f})")
-                self._last_debug_time = current_time
-
-            # Firebase更新は完全に無効化（無限ループ防止）
+            # 🚨 Note: Battery simulation logic is now handled in SensorAggregator.publish_telemetry_check()
+            # self.sensor_aggregator.simulate_battery(self.robot_id, speed) # 削除・移動
 
         except Exception as e:
-            self.get_logger().error(f"オドメトリ処理エラー: {e}")
+            self.get_logger().error(f"Odom callback error: {e}")
 
-    def initialpose_callback(self, msg: PoseWithCovarianceStamped):
-        """初期位置コールバック"""
-        try:
-            self.get_logger().info("ロボット初期位置が設定されました")
+    def scan_callback(self, msg: LaserScan):
+        """Handle LiDAR scan updates."""
+        if self.sensor_aggregator:
+            self.sensor_aggregator.scan_callback(msg)
 
-            # 初期位置もFirestoreに反映する場合（必要に応じてコメントアウト）
-            # x = msg.pose.pose.position.x
-            # y = msg.pose.pose.position.y
+    def battery_callback(self, msg: BatteryState):
+        """Handle battery state updates."""
+        if self.sensor_aggregator:
+            self.sensor_aggregator.battery_callback(msg)
 
-            # gps_coords = self.coordinate_converter.map_to_gps_coordinates(x, y)
-            # robot_id = self.get_current_robot_id()
-
-            # if robot_id and self.firebase_client:
-            #     self.firebase_client.update_robot_status(
-            #         robot_id,
-            #         gps_coords,
-            #         'アイドリング中'
-            #     )
-
-        except Exception as e:
-            self.get_logger().error(f"初期位置処理エラー: {e}")
-
-    def publish_robot_status(self, robot_id: str, status: str):
-        """ロボットステータスをROS2トピックに発行"""
-        try:
-            status_msg = String()
-            status_msg.data = f"{robot_id}:{status}"
-            self.status_publisher.publish(status_msg)
-
-        except Exception as e:
-            self.get_logger().error(f"ステータス発行エラー: {e}")
-
-    def get_current_robot_id(self) -> Optional[str]:
-        """現在のロボットIDを取得"""
-        # Firestoreから利用可能なロボットを動的取得
-        try:
-            if self.firebase_client:
-                robots_ref = self.firebase_client.db.collection('robots')
-                robots = list(robots_ref.stream())
-
-                if robots:
-                    # 最初に見つかったロボットを使用
-                    robot_id = robots[0].id
-                    self.get_logger().info(f"使用ロボットID: {robot_id}")
-                    return robot_id
-                else:
-                    self.get_logger().warning("利用可能なロボットが見つかりません")
-                    return None
-        except Exception as e:
-            self.get_logger().error(f"ロボットID取得エラー: {e}")
-
-        return "robot_001"  # フォールバック
+    # ============================================================
+    # UTILITIES
+    # ============================================================
 
     def shutdown(self):
-        """シャットダウン処理"""
+        """Clean shutdown."""
         try:
-            self.get_logger().info("Firebase Bridge Node をシャットダウンしています...")
+            self.get_logger().info("🛑 Shutting down Enhanced Firebase Bridge")
 
             if self.firebase_client:
                 self.firebase_client.close_listeners()
 
-            # アクティブなナビゲーションをキャンセル
-            for robot_id, future in self.active_navigation.items():
-                try:
-                    if not future.done():
-                        future.cancel()
-                except Exception as e:
-                    self.get_logger().error(f"ナビゲーションキャンセルエラー {robot_id}: {e}")
-
-            self.get_logger().info("シャットダウン完了")
+            if self.navigation_active:
+                self.cancel_navigation()
 
         except Exception as e:
-            self.get_logger().error(f"シャットダウンエラー: {e}")
+            self.get_logger().error(f"Shutdown error: {e}")
+
 
 def main(args=None):
-    """メイン関数"""
+    """Main entry point."""
     rclpy.init(args=args)
 
     try:
-        # マルチスレッドエグゼキュータを使用
         executor = MultiThreadedExecutor()
-
-        # ノード作成
-        node = FirebaseBridgeNode()
-
-        # エグゼキュータにノードを追加
+        node = EnhancedFirebaseBridge()
         executor.add_node(node)
 
         try:
-            # ノード実行
             executor.spin()
-
         except KeyboardInterrupt:
-            node.get_logger().info("KeyboardInterrupt を受信しました")
-
+            node.get_logger().info("KeyboardInterrupt received")
         finally:
-            # クリーンアップ
             node.shutdown()
             node.destroy_node()
 
     except Exception as e:
-        print(f"メイン関数エラー: {e}")
-
+        print(f"Main error: {e}")
     finally:
-        # ROS2終了処理
         try:
             rclpy.shutdown()
-        except Exception as e:
-            print(f"ROS2シャットダウンエラー: {e}")
+        except:
+            pass
+
 
 if __name__ == '__main__':
     main()

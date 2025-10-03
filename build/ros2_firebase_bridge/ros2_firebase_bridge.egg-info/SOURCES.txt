@@ -13,4 +13,6 @@ ros2_firebase_bridge/__init__.py
 ros2_firebase_bridge/coordinate_converter.py
 ros2_firebase_bridge/firebase_bridge_node.py
 ros2_firebase_bridge/firebase_client.py
+ros2_firebase_bridge/sensor_aggregator.py
+ros2_firebase_bridge/state_publisher.py
 ros2_firebase_bridge/test_coordinates.py

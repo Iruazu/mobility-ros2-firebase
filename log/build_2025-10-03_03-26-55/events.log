@@ -1,0 +1,114 @@
+[0.000000] (-) TimerEvent: {}
+[0.018932] (ros2_firebase_bridge) JobQueued: {'identifier': 'ros2_firebase_bridge', 'dependencies': OrderedDict()}
+[0.019285] (ros2_firebase_bridge) JobStarted: {'identifier': 'ros2_firebase_bridge'}
+[0.089599] (-) TimerEvent: {}
+[0.190697] (-) TimerEvent: {}
+[0.291411] (-) TimerEvent: {}
+[0.392178] (-) TimerEvent: {}
+[0.493157] (-) TimerEvent: {}
+[0.594426] (-) TimerEvent: {}
+[0.697153] (-) TimerEvent: {}
+[0.817703] (-) TimerEvent: {}
+[0.919366] (-) TimerEvent: {}
+[1.033461] (-) TimerEvent: {}
+[1.134980] (-) TimerEvent: {}
+[1.236071] (-) TimerEvent: {}
+[1.336729] (-) TimerEvent: {}
+[1.437341] (-) TimerEvent: {}
+[1.538445] (-) TimerEvent: {}
+[1.651092] (-) TimerEvent: {}
+[1.756730] (-) TimerEvent: {}
+[1.857884] (-) TimerEvent: {}
+[1.958534] (-) TimerEvent: {}
+[2.059171] (-) TimerEvent: {}
+[2.165202] (-) TimerEvent: {}
+[2.266310] (-) TimerEvent: {}
+[2.367497] (-) TimerEvent: {}
+[2.468665] (-) TimerEvent: {}
+[2.569463] (-) TimerEvent: {}
+[2.671547] (-) TimerEvent: {}
+[2.776987] (-) TimerEvent: {}
+[2.877846] (-) TimerEvent: {}
+[2.981359] (-) TimerEvent: {}
+[3.082391] (-) TimerEvent: {}
+[3.185744] (-) TimerEvent: {}
+[3.287113] (-) TimerEvent: {}
+[3.388592] (-) TimerEvent: {}
+[3.490101] (-) TimerEvent: {}
+[3.591026] (-) TimerEvent: {}
+[3.697356] (-) TimerEvent: {}
+[3.799606] (-) TimerEvent: {}
+[3.900561] (-) TimerEvent: {}
+[4.002568] (-) TimerEvent: {}
+[4.107524] (-) TimerEvent: {}
+[4.209499] (-) TimerEvent: {}
+[4.310353] (-) TimerEvent: {}
+[4.411317] (-) TimerEvent: {}
+[4.514017] (-) TimerEvent: {}
+[4.616272] (-) TimerEvent: {}
+[4.717616] (-) TimerEvent: {}
+[4.822114] (-) TimerEvent: {}
+[4.933147] (-) TimerEvent: {}
+[5.036286] (-) TimerEvent: {}
+[5.138349] (-) TimerEvent: {}
+[5.239158] (-) TimerEvent: {}
+[5.340690] (-) TimerEvent: {}
+[5.432070] (ros2_firebase_bridge) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/ros2_firebase_bridge', 'build', '--build-base', '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build', 'install', '--record', '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge', 'env': {'PYTHON_BASIC_REPL': '1', 'HOSTNAME': 'docker-desktop', 'GIT_ASKPASS': '/vscode/vscode-server/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/extensions/git/dist/askpass.sh', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/vscode/vscode-server/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/bin/helpers/browser.sh', 'HOME': '/home/developer', 'TERM_PROGRAM_VERSION': '1.104.2', 'VSCODE_IPC_HOOK_CLI': '/run/user/1000/vscode-ipc-dca7e780-374f-4cbb-aade-3f4c5a69a753.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/vscode/vscode-server/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/extensions/git/dist/askpass-main.js', 'VSCODE_GIT_ASKPASS_NODE': '/vscode/vscode-server/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/node', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/developer/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-x64/bundled/libs/debugpy', 'VSCODE_PYTHON_AUTOACTIVATE_GUARD': '1', 'COLORTERM': 'truecolor', 'REMOTE_CONTAINERS': 'true', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/workspace/install', 'ROS_DISTRO': 'humble', 'REMOTE_CONTAINERS_IPC': '/tmp/vscode-remote-containers-ipc-996715f4-8f0a-41d0-a54f-7b66b6d576d8.sock', 'PULSE_SERVER': 'unix:/run/user/1000//pulse/native', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'TERM': 'xterm-256color', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/workspace/install/ros2_firebase_bridge/bin:/opt/ros/humble/bin:/vscode/vscode-server/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/bin/remote-cli:/home/developer/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/developer/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-x64/bundled/scripts/noConfigScripts:/home/developer/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand', 'XDG_RUNTIME_DIR': '/run/user/1000/', 'REMOTE_CONTAINERS_SOCKETS': '["/home/developer/.gnupg/S.gpg-agent"]', 'DISPLAY': ':0', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/developer/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-x64/.noConfigDebugAdapterEndpoints/endpoint-84a0047849f065fd.txt', 'LANG': 'C.UTF-8', 'PYTHONSTARTUP': '/home/developer/.vscode-server/data/User/workspaceStorage/4eff0c1d902297bdd65206f9d0e4f6af/ms-python.python/pythonrc.py', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-6c31dbe302.sock', 'TERM_PROGRAM': 'vscode', 'AMENT_PREFIX_PATH': '/workspace/install/ros2_firebase_bridge:/opt/ros/humble', 'SHELL': '/bin/sh', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge', 'TURTLEBOT3_MODEL': 'waffle', 'LC_ALL': 'C.UTF-8', 'PYTHONPATH': '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:/workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages:/workspace/install/lib/python3.10/site-packages:', 'COLCON': '1'}, 'shell': False}
+[5.456138] (-) TimerEvent: {}
+[5.560052] (-) TimerEvent: {}
+[5.661370] (-) TimerEvent: {}
+[5.762491] (-) TimerEvent: {}
+[5.871567] (-) TimerEvent: {}
+[5.972425] (-) TimerEvent: {}
+[6.073176] (-) TimerEvent: {}
+[6.174154] (-) TimerEvent: {}
+[6.275083] (-) TimerEvent: {}
+[6.375815] (ros2_firebase_bridge) StdoutLine: {'line': b'running egg_info\n'}
+[6.376472] (-) TimerEvent: {}
+[6.380063] (ros2_firebase_bridge) StdoutLine: {'line': b'writing ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/PKG-INFO\n'}
+[6.389129] (ros2_firebase_bridge) StdoutLine: {'line': b'writing dependency_links to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/dependency_links.txt\n'}
+[6.391414] (ros2_firebase_bridge) StdoutLine: {'line': b'writing entry points to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/entry_points.txt\n'}
+[6.394341] (ros2_firebase_bridge) StdoutLine: {'line': b'writing requirements to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt\n'}
+[6.411285] (ros2_firebase_bridge) StdoutLine: {'line': b'writing top-level names to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt\n'}
+[6.420980] (ros2_firebase_bridge) StdoutLine: {'line': b"reading manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'\n"}
+[6.425262] (ros2_firebase_bridge) StdoutLine: {'line': b"writing manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'\n"}
+[6.426453] (ros2_firebase_bridge) StdoutLine: {'line': b'running build\n'}
+[6.427038] (ros2_firebase_bridge) StdoutLine: {'line': b'running build_py\n'}
+[6.428158] (ros2_firebase_bridge) StdoutLine: {'line': b'copying ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge\n'}
+[6.433784] (ros2_firebase_bridge) StdoutLine: {'line': b'copying ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge\n'}
+[6.440230] (ros2_firebase_bridge) StdoutLine: {'line': b'copying ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge\n'}
+[6.448700] (ros2_firebase_bridge) StdoutLine: {'line': b'running install\n'}
+[6.452024] (ros2_firebase_bridge) StdoutLine: {'line': b'running install_lib\n'}
+[6.461908] (ros2_firebase_bridge) StdoutLine: {'line': b'copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge\n'}
+[6.462523] (ros2_firebase_bridge) StdoutLine: {'line': b'copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge\n'}
+[6.466724] (ros2_firebase_bridge) StdoutLine: {'line': b'copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge\n'}
+[6.472225] (ros2_firebase_bridge) StdoutLine: {'line': b'byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py to firebase_bridge_node.cpython-310.pyc\n'}
+[6.473434] (ros2_firebase_bridge) StderrLine: {'line': b'  File "/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py", line 144\n'}
+[6.473889] (ros2_firebase_bridge) StderrLine: {'line': b'    return \xc2\xa0# Already initialized\n'}
+[6.473985] (ros2_firebase_bridge) StderrLine: {'line': b'           ^\n'}
+[6.474058] (ros2_firebase_bridge) StderrLine: {'line': b'SyntaxError: invalid non-printable character U+00A0\n'}
+[6.474129] (ros2_firebase_bridge) StderrLine: {'line': b'\n'}
+[6.474215] (ros2_firebase_bridge) StdoutLine: {'line': b'byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/sensor_aggregator.py to sensor_aggregator.cpython-310.pyc\n'}
+[6.476680] (-) TimerEvent: {}
+[6.488223] (ros2_firebase_bridge) StdoutLine: {'line': b'byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py to state_publisher.cpython-310.pyc\n'}
+[6.489594] (ros2_firebase_bridge) StdoutLine: {'line': b'running install_data\n'}
+[6.494842] (ros2_firebase_bridge) StdoutLine: {'line': b'running install_egg_info\n'}
+[6.495253] (ros2_firebase_bridge) StderrLine: {'line': b'  File "/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py", line 27\n'}
+[6.495403] (ros2_firebase_bridge) StderrLine: {'line': b'    self.min_update_interval = 1.0 \xc2\xa0# seconds\n'}
+[6.495534] (ros2_firebase_bridge) StderrLine: {'line': b'                                   ^\n'}
+[6.495630] (ros2_firebase_bridge) StderrLine: {'line': b'SyntaxError: invalid non-printable character U+00A0\n'}
+[6.495738] (ros2_firebase_bridge) StderrLine: {'line': b'\n'}
+[6.495834] (ros2_firebase_bridge) StdoutLine: {'line': b"removing '/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info' (and everything under it)\n"}
+[6.525120] (ros2_firebase_bridge) StdoutLine: {'line': b'Copying ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info\n'}
+[6.529333] (ros2_firebase_bridge) StdoutLine: {'line': b'running install_scripts\n'}
+[6.578472] (-) TimerEvent: {}
+[6.637742] (ros2_firebase_bridge) StdoutLine: {'line': b'Installing coordinate_test script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin\n'}
+[6.645971] (ros2_firebase_bridge) StdoutLine: {'line': b'Installing firebase_bridge script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin\n'}
+[6.646377] (ros2_firebase_bridge) StdoutLine: {'line': b"writing list of installed files to '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log'\n"}
+[6.680424] (-) TimerEvent: {}
+[6.785068] (-) TimerEvent: {}
+[6.821702] (ros2_firebase_bridge) CommandEnded: {'returncode': 0}
+[6.912518] (-) TimerEvent: {}
+[7.019131] (ros2_firebase_bridge) JobEnded: {'identifier': 'ros2_firebase_bridge', 'rc': 0}
+[7.032867] (-) TimerEvent: {}
+[7.033496] (-) EventReactorShutdown: {}

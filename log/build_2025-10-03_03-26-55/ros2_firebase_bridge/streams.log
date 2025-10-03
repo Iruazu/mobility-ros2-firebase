@@ -1,0 +1,41 @@
+[5.436s] Invoking command in '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_firebase_bridge build --build-base /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build install --record /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log --single-version-externally-managed install_data
+[6.357s] running egg_info
+[6.361s] writing ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/PKG-INFO
+[6.370s] writing dependency_links to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/dependency_links.txt
+[6.372s] writing entry points to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/entry_points.txt
+[6.375s] writing requirements to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
+[6.392s] writing top-level names to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
+[6.402s] reading manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[6.406s] writing manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[6.407s] running build
+[6.408s] running build_py
+[6.409s] copying ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[6.415s] copying ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[6.423s] copying ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[6.430s] running install
+[6.436s] running install_lib
+[6.443s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[6.443s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[6.448s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[6.453s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py to firebase_bridge_node.cpython-310.pyc
+[6.454s]   File "/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py", line 144
+[6.455s]     return  # Already initialized
+[6.455s]            ^
+[6.455s] SyntaxError: invalid non-printable character U+00A0
+[6.455s] 
+[6.455s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/sensor_aggregator.py to sensor_aggregator.cpython-310.pyc
+[6.469s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py to state_publisher.cpython-310.pyc
+[6.473s] running install_data
+[6.476s] running install_egg_info
+[6.476s]   File "/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py", line 27
+[6.476s]     self.min_update_interval = 1.0  # seconds
+[6.476s]                                    ^
+[6.476s] SyntaxError: invalid non-printable character U+00A0
+[6.476s] 
+[6.477s] removing '/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info' (and everything under it)
+[6.506s] Copying ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info
+[6.510s] running install_scripts
+[6.619s] Installing coordinate_test script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[6.627s] Installing firebase_bridge script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[6.627s] writing list of installed files to '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log'
+[6.803s] Invoked command in '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge' returned '0': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_firebase_bridge build --build-base /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build install --record /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log --single-version-externally-managed install_data

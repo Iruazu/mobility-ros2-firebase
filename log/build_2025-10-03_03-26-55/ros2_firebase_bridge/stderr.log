@@ -1,0 +1,10 @@
+  File "/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py", line 144
+    return  # Already initialized
+           ^
+SyntaxError: invalid non-printable character U+00A0
+
+  File "/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py", line 27
+    self.min_update_interval = 1.0  # seconds
+                                   ^
+SyntaxError: invalid non-printable character U+00A0
+
