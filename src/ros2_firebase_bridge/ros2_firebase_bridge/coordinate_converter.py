@@ -2,10 +2,11 @@
 
 import math
 import logging
-from typing import Dict, Tuple
-from geometry_msgs.msg import PoseStamped
-from tf_transformations import quaternion_from_euler
+from typing import Dict, Tuple, Optional
+from geometry_msgs.msg import PoseStamped, Quaternion
 import rclpy
+from rclpy.clock import Clock
+
 
 class CoordinateConverter:
     def __init__(self, origin_lat: float = 36.5598, origin_lng: float = 139.9088,
@@ -101,7 +102,7 @@ class CoordinateConverter:
 
             pose = PoseStamped()
             pose.header.frame_id = frame_id
-            pose.header.stamp = rclpy.clock.Clock().now().to_msg()
+            pose.header.stamp = Clock().now().to_msg()
 
             # 位置設定
             pose.pose.position.x = map_coords['x']
@@ -109,11 +110,8 @@ class CoordinateConverter:
             pose.pose.position.z = 0.0
 
             # 向き設定（クォータニオン）
-            quat = quaternion_from_euler(0, 0, yaw)
-            pose.pose.orientation.x = quat[0]
-            pose.pose.orientation.y = quat[1]
-            pose.pose.orientation.z = quat[2]
-            pose.pose.orientation.w = quat[3]
+            quat = self._euler_to_quaternion(0, 0, yaw)
+            pose.pose.orientation = quat
 
             self.logger.debug(f"PoseStamped作成: ({lat:.6f}, {lng:.6f}) → MAP({map_coords['x']:.2f}, {map_coords['y']:.2f})")
 
@@ -124,8 +122,33 @@ class CoordinateConverter:
             # エラー時は原点を返す
             pose = PoseStamped()
             pose.header.frame_id = frame_id
-            pose.header.stamp = rclpy.clock.Clock().now().to_msg()
+            pose.header.stamp = Clock().now().to_msg()
             return pose
+
+    def _euler_to_quaternion(self, roll: float, pitch: float, yaw: float) -> Quaternion:
+        """
+        オイラー角をクォータニオンに変換
+
+        Args:
+            roll, pitch, yaw: 回転角（ラジアン）
+
+        Returns:
+            Quaternionメッセージ
+        """
+        cy = math.cos(yaw * 0.5)
+        sy = math.sin(yaw * 0.5)
+        cp = math.cos(pitch * 0.5)
+        sp = math.sin(pitch * 0.5)
+        cr = math.cos(roll * 0.5)
+        sr = math.sin(roll * 0.5)
+
+        q = Quaternion()
+        q.w = cr * cp * cy + sr * sp * sy
+        q.x = sr * cp * cy - cr * sp * sy
+        q.y = cr * sp * cy + sr * cp * sy
+        q.z = cr * cp * sy - sr * sp * cy
+
+        return q
 
     def calculate_distance(self, lat1: float, lng1: float,
                          lat2: float, lng2: float) -> float:

@@ -1,5 +1,4 @@
-PyYAML
-firebase-admin
-google-cloud-firestore
+PyYAML>=6.0
+firebase-admin>=6.0.0
+google-cloud-firestore>=2.11.0
 setuptools
-tf-transformations

@@ -7,7 +7,7 @@ import time
 import math
 from typing import Dict, Optional
 from geometry_msgs.msg import Pose
-from firebase_admin import firestore # GeoPoint を使用するためにインポート (FirebaseClient側で処理される場合もあるが、ここで準備)
+from firebase_admin import firestore
 import rclpy
 from rclpy.node import Node
 
@@ -24,16 +24,16 @@ class StatePublisher:
         self.logger = logger
 
         # Rate limiting: Don't update Firebase more than once per second
-        self.min_update_interval = 1.0  # seconds
+        self.min_update_interval = 1.0  # seconds
         self.last_update_time = {}
 
         # Delta threshold: Only update if robot moved significantly
-        self.position_threshold = 0.5  # meters
-        self.heading_threshold = 0.1   # radians (~5.7 degrees)
+        self.position_threshold = 0.5  # meters
+        self.heading_threshold = 0.1  # radians (~5.7 degrees)
         self.last_published_state = {}
 
     def should_publish_update(self, robot_id: str, new_position: Dict,
-                            new_heading: float) -> bool:
+                              new_heading: float) -> bool:
         """
         Determine if state update should be published to Firebase.
         """
@@ -74,7 +74,7 @@ class StatePublisher:
                 return
 
             # 3. データを準備 (GeoPoint オブジェクトの作成)
-            # 🚨 Note: GeoPointオブジェクトは update_data に含め、FirebaseClient で処理されるようにする
+            # Note: GeoPointオブジェクトは update_data に含め、FirebaseClient で処理されるようにする
             update_data = {
                 'position': firestore.GeoPoint(gps_coords['lat'], gps_coords['lng']),
                 'heading': heading,
@@ -84,8 +84,7 @@ class StatePublisher:
             if additional_data:
                 update_data.update(additional_data)
 
-            # 4. 🚀 Firebaseへの更新 (メソッド名修正)
-            # 🚨 エラー解消: update_robot_status -> update_robot_state
+            # 4. Firebaseへの更新
             self.firebase.update_robot_state(robot_id, update_data)
 
             # 5. トラッキング情報を更新
@@ -106,7 +105,6 @@ class StatePublisher:
 
     def _calculate_distance(self, pos1: Dict, pos2: Dict) -> float:
         """Calculate distance between two GPS positions in meters (Haversine formula)."""
-        # (Haversine formula はそのまま利用)
         R = 6371000
         dlat = math.radians(pos2['lat'] - pos1['lat'])
         dlng = math.radians(pos2['lng'] - pos1['lng'])
@@ -127,9 +125,9 @@ class RobotStateTracker:
     def __init__(self, node: Node, state_publisher: StatePublisher):
         self.node = node
         self.publisher = state_publisher
-        self.robots = {}  # robot_id -> latest state
+        self.robots = {}  # robot_id -> latest state
 
-        # 🚨 RobotStateTracker は単なるデータ集約ロジックとして機能させるため、
+        # RobotStateTracker は単なるデータ集約ロジックとして機能させるため、
         # Odomメッセージの処理は update_from_odom メソッドで実行する
 
     def update_from_odom(self, robot_id: str, odom_msg):
@@ -141,7 +139,7 @@ class RobotStateTracker:
 
             # Extract heading from quaternion
             q = odom_msg.pose.pose.orientation
-            # 🚨 Note: _quaternion_to_yaw はこのクラスの外部に定義されているか、
+            # Note: _quaternion_to_yaw はこのクラスの外部に定義されているか、
             # tf_transformations からインポートして使用することを推奨します。
             # ここでは便宜上、クラスメソッドとして実装。
             heading = self._quaternion_to_yaw(q.x, q.y, q.z, q.w)
@@ -159,7 +157,7 @@ class RobotStateTracker:
             }
 
             # Publish to Firebase (with smart filtering)
-            # 🚨 Note: 速度は sensor_aggregator 側で処理するため、ここでは status update のみに集中
+            # Note: 速度は sensor_aggregator 側で処理するため、ここでは status update のみに集中
             self.publisher.publish_state(
                 robot_id, map_x, map_y, heading
                 # additional_data={'telemetry': {'speed': speed}} は sensor_aggregator に任せる

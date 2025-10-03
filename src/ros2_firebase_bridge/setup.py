@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+import os
+from glob import glob
 
 package_name = 'ros2_firebase_bridge'
 
@@ -10,14 +12,15 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/config', ['config/firebase_config.yaml']),
+        # config ファイルのインストール
+        (os.path.join('share', package_name, 'config'),
+            glob('config/*.yaml')),
     ],
     install_requires=[
         'setuptools',
-        'firebase-admin',
-        'google-cloud-firestore',
-        'tf-transformations',
-        'PyYAML',
+        'firebase-admin>=6.0.0',
+        'google-cloud-firestore>=2.11.0',
+        'PyYAML>=6.0',
     ],
     zip_safe=True,
     maintainer='Developer',
