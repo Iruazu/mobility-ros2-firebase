@@ -1,4 +1,4 @@
-"""Firebase Firestore接続クライアント"""
+"""Firebase Firestore接続クライアント - 完全版"""
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -74,10 +74,26 @@ class FirebaseClient:
             self.logger.error(f"リアルタイムリスナー設定失敗: {e}")
             raise
 
+    def update_robot_state(self, robot_id: str, update_data: Dict[str, Any]):
+        """
+        ロボットの状態を更新（汎用メソッド）
+
+        Args:
+            robot_id: ロボットのドキュメントID
+            update_data: 更新するデータ（辞書形式）
+                例: {'position': GeoPoint(...), 'status': 'idle'}
+        """
+        try:
+            doc_ref = self.db.collection('robots').document(robot_id)
+            doc_ref.update(update_data)
+            self.logger.debug(f"ロボット状態更新完了: {robot_id}")
+        except Exception as e:
+            self.logger.error(f"ロボット状態更新失敗 {robot_id}: {e}")
+
     def update_robot_status(self, robot_id: str, position: Dict[str, float],
                           status: str, additional_data: Optional[Dict] = None):
         """
-        ロボットの状態をFirestoreに更新
+        ロボットの状態をFirestoreに更新（後方互換性のため残す）
 
         Args:
             robot_id: ロボットのドキュメントID
@@ -102,6 +118,26 @@ class FirebaseClient:
 
         except Exception as e:
             self.logger.error(f"ロボット状態更新失敗 {robot_id}: {e}")
+
+    def update_robot_telemetry(self, robot_id: str, telemetry_data: Dict[str, Any]):
+        """
+        ロボットのテレメトリデータを更新
+
+        Args:
+            robot_id: ロボットのドキュメントID
+            telemetry_data: テレメトリデータ
+                例: {'battery_percent': 85.5, 'speed': 0.22, ...}
+        """
+        try:
+            doc_ref = self.db.collection('robots').document(robot_id)
+
+            # SERVER_TIMESTAMP を追加
+            telemetry_data['last_sensor_update'] = firestore.SERVER_TIMESTAMP
+
+            doc_ref.update({'telemetry': telemetry_data})
+            self.logger.debug(f"テレメトリ更新完了: {robot_id}")
+        except Exception as e:
+            self.logger.error(f"テレメトリ更新失敗 {robot_id}: {e}")
 
     def get_robot_data(self, robot_id: str) -> Optional[Dict[str, Any]]:
         """

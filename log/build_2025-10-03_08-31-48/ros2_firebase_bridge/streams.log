@@ -1,0 +1,60 @@
+[1.422s] Invoking command in '/workspace/src/ros2_firebase_bridge': PYTHONPATH=/workspace/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_firebase_bridge build --build-base /workspace/build/ros2_firebase_bridge/build install --record /workspace/build/ros2_firebase_bridge/install.log --single-version-externally-managed install_data
+[1.822s] running egg_info
+[1.824s] creating ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info
+[1.827s] writing ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/PKG-INFO
+[1.828s] writing dependency_links to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/dependency_links.txt
+[1.829s] writing entry points to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/entry_points.txt
+[1.830s] writing requirements to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
+[1.831s] writing top-level names to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
+[1.831s] writing manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.835s] reading manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.836s] writing manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.836s] running build
+[1.836s] running build_py
+[1.836s] creating /workspace/build/ros2_firebase_bridge/build
+[1.838s] creating /workspace/build/ros2_firebase_bridge/build/lib
+[1.839s] creating /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.842s] copying ros2_firebase_bridge/firebase_bridge_node.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.842s] copying ros2_firebase_bridge/firebase_client.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.842s] copying ros2_firebase_bridge/sensor_aggregator.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.842s] copying ros2_firebase_bridge/test_coordinates.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.844s] copying ros2_firebase_bridge/coordinate_converter.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.844s] copying ros2_firebase_bridge/__init__.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.844s] copying ros2_firebase_bridge/state_publisher.py -> /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[1.844s] running install
+[1.844s] running install_lib
+[1.846s] creating /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.849s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_bridge_node.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.849s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_client.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.850s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/sensor_aggregator.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.850s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/test_coordinates.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.851s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/coordinate_converter.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.851s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/__init__.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.851s] copying /workspace/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/state_publisher.py -> /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[1.855s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py to firebase_bridge_node.cpython-310.pyc
+[1.858s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_client.py to firebase_client.cpython-310.pyc
+[1.867s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/sensor_aggregator.py to sensor_aggregator.cpython-310.pyc
+[1.871s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/test_coordinates.py to test_coordinates.cpython-310.pyc
+[1.872s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/coordinate_converter.py to coordinate_converter.cpython-310.pyc
+[1.872s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/__init__.py to __init__.cpython-310.pyc
+[1.873s] byte-compiling /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py to state_publisher.cpython-310.pyc
+[1.873s]   File "/workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py", line 27
+[1.873s]     self.min_update_interval = 1.0  # seconds
+[1.873s]                                    ^
+[1.873s] SyntaxError: invalid non-printable character U+00A0
+[1.873s] 
+[1.873s] running install_data
+[1.873s] creating /workspace/install/ros2_firebase_bridge/share/ament_index
+[1.873s] creating /workspace/install/ros2_firebase_bridge/share/ament_index/resource_index
+[1.874s] creating /workspace/install/ros2_firebase_bridge/share/ament_index/resource_index/packages
+[1.874s] copying resource/ros2_firebase_bridge -> /workspace/install/ros2_firebase_bridge/share/ament_index/resource_index/packages
+[1.874s] copying package.xml -> /workspace/install/ros2_firebase_bridge/share/ros2_firebase_bridge
+[1.874s] creating /workspace/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config
+[1.875s] copying config/firebase_config.yaml -> /workspace/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config
+[1.875s] running install_egg_info
+[1.881s] Copying ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info to /workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info
+[1.882s] running install_scripts
+[1.916s] Installing coordinate_test script to /workspace/install/ros2_firebase_bridge/bin
+[1.918s] Installing firebase_bridge script to /workspace/install/ros2_firebase_bridge/bin
+[1.920s] writing list of installed files to '/workspace/build/ros2_firebase_bridge/install.log'
+[1.962s] Invoked command in '/workspace/src/ros2_firebase_bridge' returned '0': PYTHONPATH=/workspace/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspace/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_firebase_bridge build --build-base /workspace/build/ros2_firebase_bridge/build install --record /workspace/build/ros2_firebase_bridge/install.log --single-version-externally-managed install_data
