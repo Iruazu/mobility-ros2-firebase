@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced Firebase-ROS2 Bridge - Complete Fixed Version
+Firebase-ROS2 Bridge - 無限ループ完全防止版
 """
 
 import rclpy
@@ -8,19 +8,14 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.action import ActionClient
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
-# ROS2 Messages
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, BatteryState
 from nav2_msgs.action import NavigateToPose
 from action_msgs.msg import GoalStatus
 
-# Firebase Admin
 from firebase_admin import firestore
-
-# Custom modules
 from ros2_firebase_bridge.firebase_client import FirebaseClient
 from ros2_firebase_bridge.coordinate_converter import CoordinateConverter
 from ros2_firebase_bridge.state_publisher import StatePublisher, RobotStateTracker
@@ -30,20 +25,16 @@ import yaml
 import os
 import math
 from typing import Dict, Any
+import hashlib
 
 
 class EnhancedFirebaseBridge(Node):
-    """
-    Firebase-ROS2 Bridge with infinite loop prevention
-    """
+    """無限ループ防止機能を強化したFirebase-ROS2 Bridge"""
 
     def __init__(self):
         super().__init__('enhanced_firebase_bridge')
 
-        # Load configuration
         self.config = self.load_config()
-
-        # Callback group for concurrent operations
         self.callback_group = ReentrantCallbackGroup()
 
         # Core components
@@ -59,21 +50,19 @@ class EnhancedFirebaseBridge(Node):
         self.navigation_active = False
         self.goal_handle = None
 
-        # 無限ループ防止
+        # 🚨 無限ループ防止の強化
         self.last_processed_destination = None
+        self.destination_hash = None  # destination のハッシュ値を保存
         self.processing_navigation = False
+        self.last_position_update_time = 0.0
+        self.position_update_cooldown = 2.0  # 位置更新の最小間隔を2秒に変更
 
-        # Setup ROS2 interfaces
         self.setup_ros2_interfaces()
-
-        # Initialize Firebase (with retry)
         self.firebase_init_timer = self.create_timer(
-            1.0,
-            self.initialize_firebase,
-            callback_group=self.callback_group
+            1.0, self.initialize_firebase, callback_group=self.callback_group
         )
 
-        self.get_logger().info("🚀 Enhanced Firebase Bridge started")
+        self.get_logger().info("🚀 Enhanced Firebase Bridge (Loop Prevention) started")
 
     def load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file."""
@@ -81,18 +70,14 @@ class EnhancedFirebaseBridge(Node):
             possible_paths = [
                 os.path.join(os.path.dirname(__file__), '..', 'config', 'firebase_config.yaml'),
                 '/workspace/config/firebase_config.yaml',
-                os.path.expanduser('~/config/firebase_config.yaml'),
             ]
 
             for config_path in possible_paths:
                 if os.path.exists(config_path):
-                    self.get_logger().info(f"Config found: {config_path}")
                     with open(config_path, 'r') as f:
                         return yaml.safe_load(f)
 
-            self.get_logger().warning("No config file found, using defaults")
             return self.get_default_config()
-
         except Exception as e:
             self.get_logger().error(f"Config load error: {e}")
             return self.get_default_config()
@@ -106,8 +91,6 @@ class EnhancedFirebaseBridge(Node):
             'ros2': {
                 'robot_namespace': '/turtlebot3',
                 'odom_topic': '/odom',
-                'scan_topic': '/scan',
-                'battery_topic': '/battery_state'
             },
             'coordinate_system': {
                 'origin_latitude': 36.5598,
@@ -119,60 +102,33 @@ class EnhancedFirebaseBridge(Node):
     def setup_ros2_interfaces(self):
         """Setup all ROS2 publishers and subscribers."""
         try:
-            # Publishers
-            self.goal_publisher = self.create_publisher(
-                PoseStamped, '/goal_pose', 10
-            )
+            self.goal_publisher = self.create_publisher(PoseStamped, '/goal_pose', 10)
+            self.nav_action_client = ActionClient(self, NavigateToPose, '/navigate_to_pose')
 
-            # Navigation2 Action Client
-            self.nav_action_client = ActionClient(
-                self, NavigateToPose, '/navigate_to_pose'
-            )
-
-            # QoS for sensor topics
-            sensor_qos = QoSProfile(
-                reliability=ReliabilityPolicy.BEST_EFFORT,
-                history=HistoryPolicy.KEEP_LAST,
-                depth=1
-            )
-
-            # Subscribers
             self.odom_subscriber = self.create_subscription(
                 Odometry, '/odom', self.odom_callback, 10
             )
-
             self.scan_subscriber = self.create_subscription(
-                LaserScan, '/scan', self.scan_callback, sensor_qos
+                LaserScan, '/scan', self.scan_callback, 10
             )
 
-            try:
-                self.battery_subscriber = self.create_subscription(
-                    BatteryState, '/battery_state', self.battery_callback, 10
-                )
-            except Exception as e:
-                self.get_logger().warning(f"Battery topic not available: {e}")
-
             self.get_logger().info("✅ ROS2 interfaces configured")
-
         except Exception as e:
             self.get_logger().error(f"ROS2 interface setup error: {e}")
 
     def initialize_firebase(self):
-        """Initialize Firebase connection and core components."""
+        """Initialize Firebase connection."""
         try:
             if self.firebase_client is not None:
                 return
 
             service_account_path = self.config['firebase']['service_account_key']
-
             if not os.path.exists(service_account_path):
                 self.get_logger().error(f"❌ Service account not found: {service_account_path}")
                 return
 
-            # Initialize Firebase client
             self.firebase_client = FirebaseClient(service_account_path, self.get_logger())
 
-            # Initialize coordinate converter
             coord_config = self.config['coordinate_system']
             self.coordinate_converter = CoordinateConverter(
                 origin_lat=coord_config['origin_latitude'],
@@ -180,52 +136,35 @@ class EnhancedFirebaseBridge(Node):
                 logger=self.get_logger()
             )
 
-            # Initialize state publisher
             self.state_publisher = StatePublisher(
                 self.firebase_client, self.coordinate_converter, self.get_logger()
             )
-
-            # Initialize state tracker
             self.state_tracker = RobotStateTracker(self, self.state_publisher)
-
-            # Initialize sensor aggregator
             self.sensor_aggregator = SensorAggregator(
                 self, self.robot_id, self.firebase_client, self.get_logger()
             )
 
-            # Setup Firestore listener
+            # Firestore リスナー設定
             self.firebase_client.setup_realtime_listener(
                 'robots', self.on_firestore_update
             )
 
-            # Initial setup in Firebase
             self.initialize_robot_in_firebase()
 
-            self.get_logger().info("🔥 Firebase connection established")
-
-            # Start telemetry timer
             self.telemetry_timer = self.create_timer(
-                2.0,
-                self.telemetry_publish_callback,
-                callback_group=self.callback_group
+                2.0, self.telemetry_publish_callback, callback_group=self.callback_group
             )
 
-            # Stop initialization timer
             self.firebase_init_timer.cancel()
+            self.get_logger().info("🔥 Firebase connection established")
 
         except Exception as e:
             self.get_logger().error(f"Firebase initialization error: {e}")
-
-    def telemetry_publish_callback(self):
-        """テレメトリ定期送信コールバック"""
-        if self.sensor_aggregator:
-            self.sensor_aggregator.publish_telemetry_check()
 
     def initialize_robot_in_firebase(self):
         """Ensure robot document exists in Firebase."""
         try:
             robot_data = self.firebase_client.get_robot_data(self.robot_id)
-
             if robot_data is None:
                 initial_data = {
                     'id': self.robot_id,
@@ -243,83 +182,67 @@ class EnhancedFirebaseBridge(Node):
                         'obstacle_detected': False
                     }
                 }
-
                 self.firebase_client.db.collection('robots').document(
                     self.robot_id
                 ).set(initial_data)
-
-                self.get_logger().info(f"✅ Initialized robot {self.robot_id} in Firebase")
-
+                self.get_logger().info(f"✅ Initialized robot {self.robot_id}")
         except Exception as e:
             self.get_logger().error(f"Robot initialization error: {e}")
 
+    def calculate_destination_hash(self, destination) -> str:
+        """destination の一意なハッシュ値を計算"""
+        if destination is None:
+            return None
+
+        lat_str = f"{destination.latitude:.8f}"
+        lng_str = f"{destination.longitude:.8f}"
+        hash_input = f"{lat_str}_{lng_str}"
+
+        return hashlib.md5(hash_input.encode()).hexdigest()
+
     def on_firestore_update(self, robot_id: str, robot_data: Dict[str, Any], change_type: str):
-        """Handle Firestore updates with infinite loop prevention."""
+        """🚨 無限ループ防止を強化した Firestore 更新ハンドラ"""
         try:
             if robot_id != self.robot_id:
                 return
 
-            self.get_logger().info(f"📨 Firestore update: {robot_id} - {change_type}")
+            self.get_logger().debug(f"📨 Firestore update: {robot_id} - {change_type}")
 
-            # ナビゲーション処理中は無視
+            # 1️⃣ ナビゲーション処理中は無視
             if self.processing_navigation:
-                self.get_logger().debug("⏸️ Navigation processing, skipping update")
+                self.get_logger().debug("⏸️ Navigation processing, skipping")
                 return
 
-            # Check destination
-            if 'destination' in robot_data and robot_data['destination']:
-                destination = robot_data['destination']
+            # 2️⃣ destination の確認
+            if 'destination' not in robot_data or not robot_data['destination']:
+                return
 
-                # 同じ destination なら無視
-                if self.is_same_destination(destination, self.last_processed_destination):
-                    self.get_logger().debug("⏸️ Same destination, skipping")
-                    return
+            destination = robot_data['destination']
 
-                if self.should_navigate_to(destination):
-                    self.last_processed_destination = destination
-                    self.send_navigation_goal(destination)
+            # 3️⃣ destination のハッシュ値をチェック
+            new_hash = self.calculate_destination_hash(destination)
 
-            # Handle status changes
-            status = robot_data.get('status', 'unknown')
-            if status == 'stop':
-                self.cancel_navigation()
+            if new_hash == self.destination_hash:
+                self.get_logger().debug("⏸️ Same destination hash, skipping")
+                return
+
+            # 4️⃣ 新しい destination として処理
+            self.destination_hash = new_hash
+            self.last_processed_destination = destination
+
+            self.get_logger().info(
+                f"🎯 New destination detected: ({destination.latitude:.6f}, {destination.longitude:.6f})"
+            )
+
+            self.send_navigation_goal(destination)
 
         except Exception as e:
             self.get_logger().error(f"Firestore update error: {e}")
-
-    def is_same_destination(self, dest1, dest2) -> bool:
-        """Check if two destinations are the same."""
-        if dest1 is None or dest2 is None:
-            return False
-
-        tolerance = 0.00001
-        lat_diff = abs(dest1.latitude - dest2.latitude)
-        lng_diff = abs(dest1.longitude - dest2.longitude)
-
-        return lat_diff < tolerance and lng_diff < tolerance
-
-    def should_navigate_to(self, destination) -> bool:
-        """Check if navigation goal is new."""
-        if not self.navigation_active:
-            return True
-
-        if self.current_goal:
-            distance = self.coordinate_converter.calculate_distance(
-                self.current_goal.latitude, self.current_goal.longitude,
-                destination.latitude, destination.longitude
-            )
-            return distance > 1.0
-
-        return True
 
     def send_navigation_goal(self, destination):
         """Send navigation goal to Nav2."""
         try:
             self.processing_navigation = True
-
-            self.get_logger().info(
-                f"🎯 Navigation goal: ({destination.latitude:.6f}, {destination.longitude:.6f})"
-            )
 
             goal_pose = self.coordinate_converter.create_pose_stamped(
                 destination.latitude, destination.longitude, frame_id='map'
@@ -332,10 +255,8 @@ class EnhancedFirebaseBridge(Node):
                 goal_msg.pose = goal_pose
 
                 future = self.nav_action_client.send_goal_async(
-                    goal_msg,
-                    feedback_callback=self.nav_feedback_callback
+                    goal_msg, feedback_callback=self.nav_feedback_callback
                 )
-
                 future.add_done_callback(self.nav_goal_response_callback)
 
                 self.current_goal = destination
@@ -347,25 +268,6 @@ class EnhancedFirebaseBridge(Node):
         except Exception as e:
             self.get_logger().error(f"Navigation goal error: {e}")
             self.processing_navigation = False
-
-    def cancel_navigation(self):
-        """Cancel current navigation."""
-        try:
-            if self.goal_handle:
-                self.get_logger().info("🛑 Cancelling navigation")
-                self.goal_handle.cancel_goal_async()
-
-            self.navigation_active = False
-            self.current_goal = None
-            self.goal_handle = None
-            self.processing_navigation = False
-
-            self.firebase_client.update_robot_state(
-                self.robot_id, {'status': 'idle'}
-            )
-
-        except Exception as e:
-            self.get_logger().error(f"Cancel navigation error: {e}")
 
     def nav_goal_response_callback(self, future):
         """Handle Nav2 goal response."""
@@ -400,54 +302,83 @@ class EnhancedFirebaseBridge(Node):
 
             if status == GoalStatus.STATUS_SUCCEEDED:
                 self.get_logger().info("🎉 Navigation completed")
-                self.firebase_client.update_robot_state(
-                    self.robot_id,
-                    {
-                        'destination': firestore.DELETE_FIELD,
-                        'status': 'idle'
-                    }
-                )
             else:
                 self.get_logger().warning(f"⚠️ Navigation failed: {status}")
-                self.firebase_client.update_robot_state(
-                    self.robot_id,
-                    {
-                        'destination': firestore.DELETE_FIELD,
-                        'status': 'idle'
-                    }
-                )
 
+            # 🚨 destination を削除してループを防止
+            self.firebase_client.update_robot_state(
+                self.robot_id,
+                {
+                    'destination': firestore.DELETE_FIELD,
+                    'status': 'idle'
+                }
+            )
+
+            # ハッシュ値とフラグをリセット
             self.navigation_active = False
             self.current_goal = None
             self.goal_handle = None
+            self.destination_hash = None
             self.last_processed_destination = None
 
         except Exception as e:
             self.get_logger().error(f"Nav result error: {e}")
 
+    def cancel_navigation(self):
+        """Cancel current navigation."""
+        try:
+            if self.goal_handle:
+                self.get_logger().info("🛑 Cancelling navigation")
+                self.goal_handle.cancel_goal_async()
+
+            self.navigation_active = False
+            self.current_goal = None
+            self.goal_handle = None
+            self.processing_navigation = False
+            self.destination_hash = None
+
+            self.firebase_client.update_robot_state(
+                self.robot_id,
+                {
+                    'status': 'idle',
+                    'destination': firestore.DELETE_FIELD
+                }
+            )
+
+        except Exception as e:
+            self.get_logger().error(f"Cancel navigation error: {e}")
+
     def odom_callback(self, msg: Odometry):
-        """Handle odometry updates."""
+        """🚨 レート制限付き Odometry コールバック"""
         if not self.state_tracker or not self.sensor_aggregator:
             return
 
         try:
-            # Update position in Firebase
-            self.state_tracker.update_from_odom(self.robot_id, msg)
+            current_time = self.get_clock().now().nanoseconds / 1e9
 
-            # Update speed
+            # レート制限チェック（2秒に1回に変更）
+            if (current_time - self.last_position_update_time) < self.position_update_cooldown:
+                return
+
+            self.last_position_update_time = current_time
+
+            # 🚨 位置更新は移動中のみ実行
+            if self.navigation_active:
+                self.state_tracker.update_from_odom(self.robot_id, msg)
+
+            # 速度更新（常時実行）
             speed = math.sqrt(
                 msg.twist.twist.linear.x**2 + msg.twist.twist.linear.y**2
             )
             self.sensor_aggregator.update_motion_state(speed)
 
-            # Update navigation state
+            # ナビゲーション状態更新
             current_pose = PoseStamped()
             current_pose.pose = msg.pose.pose
 
             if self.current_goal and self.navigation_active:
                 goal_pose = self.coordinate_converter.create_pose_stamped(
-                    self.current_goal.latitude,
-                    self.current_goal.longitude
+                    self.current_goal.latitude, self.current_goal.longitude
                 )
                 self.sensor_aggregator.update_navigation_state(goal_pose, current_pose)
             else:
@@ -465,6 +396,11 @@ class EnhancedFirebaseBridge(Node):
         """Handle battery state."""
         if self.sensor_aggregator:
             self.sensor_aggregator.battery_callback(msg)
+
+    def telemetry_publish_callback(self):
+        """テレメトリ定期送信"""
+        if self.sensor_aggregator:
+            self.sensor_aggregator.publish_telemetry_check()
 
     def shutdown(self):
         """Clean shutdown."""
