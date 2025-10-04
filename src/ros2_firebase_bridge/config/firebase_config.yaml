@@ -10,8 +10,8 @@ ros2:
 
 coordinate_system:
   # マップ座標系の原点（GPS座標）
-  origin_latitude: 36.5598
-  origin_longitude: 139.9088
+  origin_latitude: 36.55077
+  origin_longitude: 139.92957
 
   # フレーム設定
   map_frame: "map"

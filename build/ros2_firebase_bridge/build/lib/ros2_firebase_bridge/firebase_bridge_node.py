@@ -93,8 +93,8 @@ class EnhancedFirebaseBridge(Node):
                 'odom_topic': '/odom',
             },
             'coordinate_system': {
-                'origin_latitude': 36.5598,
-                'origin_longitude': 139.9088,
+                'origin_latitude': 36.55077,
+                'origin_longitude': 139.92957,
                 'map_frame': 'map'
             }
         }
@@ -240,13 +240,39 @@ class EnhancedFirebaseBridge(Node):
             self.get_logger().error(f"Firestore update error: {e}")
 
     def send_navigation_goal(self, destination):
-        """Send navigation goal to Nav2."""
+        """Send navigation goal to Nav2 with validation."""
         try:
             self.processing_navigation = True
 
-            goal_pose = self.coordinate_converter.create_pose_stamped(
-                destination.latitude, destination.longitude, frame_id='map'
+            # ✅ ゴール検証を追加
+            is_valid, error_msg = self.coordinate_converter.validate_goal(
+                destination.latitude, destination.longitude
             )
+
+            if not is_valid:
+                self.get_logger().error(f"❌ 無効なゴール: {error_msg}")
+
+                # 最も近い安全な座標を取得
+                safe_goal = self.coordinate_converter.get_safe_goal_near(
+                    destination.latitude, destination.longitude
+                )
+                self.get_logger().warning(
+                    f"🔧 安全な座標に補正: ({safe_goal['lat']:.6f}, {safe_goal['lng']:.6f})"
+                )
+
+                # 補正後の座標でゴールを作成
+                goal_pose = self.coordinate_converter.create_pose_stamped(
+                    safe_goal['lat'], safe_goal['lng'], frame_id='map'
+                )
+            else:
+                # 通常のゴール作成
+                self.get_logger().info(
+                    f"🎯 Navigation goal: ({destination.latitude:.6f}, {destination.longitude:.6f})"
+                )
+
+                goal_pose = self.coordinate_converter.create_pose_stamped(
+                    destination.latitude, destination.longitude, frame_id='map'
+                )
 
             self.goal_publisher.publish(goal_pose)
 
@@ -255,7 +281,8 @@ class EnhancedFirebaseBridge(Node):
                 goal_msg.pose = goal_pose
 
                 future = self.nav_action_client.send_goal_async(
-                    goal_msg, feedback_callback=self.nav_feedback_callback
+                    goal_msg,
+                    feedback_callback=self.nav_feedback_callback
                 )
                 future.add_done_callback(self.nav_goal_response_callback)
 
@@ -349,24 +376,24 @@ class EnhancedFirebaseBridge(Node):
             self.get_logger().error(f"Cancel navigation error: {e}")
 
     def odom_callback(self, msg: Odometry):
-        """🚨 レート制限付き Odometry コールバック"""
+        """🚨 位置同期対応 Odometry コールバック"""
         if not self.state_tracker or not self.sensor_aggregator:
             return
 
         try:
             current_time = self.get_clock().now().nanoseconds / 1e9
 
-            # レート制限チェック（2秒に1回に変更）
+            # レート制限チェック（1秒に1回）
             if (current_time - self.last_position_update_time) < self.position_update_cooldown:
                 return
 
             self.last_position_update_time = current_time
 
-            # 🚨 位置更新は移動中のみ実行
-            if self.navigation_active:
-                self.state_tracker.update_from_odom(self.robot_id, msg)
+            # 🚨 位置更新を常に実行（Web側マーカー同期のため）
+            # state_tracker内のフィルタリングで無駄な更新は抑制される
+            self.state_tracker.update_from_odom(self.robot_id, msg)
 
-            # 速度更新（常時実行）
+            # 速度更新
             speed = math.sqrt(
                 msg.twist.twist.linear.x**2 + msg.twist.twist.linear.y**2
             )

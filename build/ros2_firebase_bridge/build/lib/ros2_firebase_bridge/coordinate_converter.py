@@ -16,7 +16,7 @@ class CoordinateConverter:
     - 範囲外座標の自動補正
     """
 
-    def __init__(self, origin_lat: float = 36.5598, origin_lng: float = 139.9088,
+    def __init__(self, origin_lat: float = 36.55077, origin_lng: float = 139.92957,
                  scale_factor: float = 0.01, logger=None):
         """
         座標変換ユーティリティを初期化

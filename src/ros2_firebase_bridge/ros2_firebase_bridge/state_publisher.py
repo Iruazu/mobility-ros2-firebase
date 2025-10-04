@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smart State Publisher - Prevents infinite loops with rate limiting and delta checks
+Smart State Publisher - Web側マーカー同期完全版
 """
 
 import time
@@ -28,9 +28,12 @@ class StatePublisher:
         self.last_update_time = {}
 
         # Delta threshold: Only update if robot moved significantly
-        self.position_threshold = 0.5  # meters
+        self.position_threshold = 0.1  # meters (10cm)
         self.heading_threshold = 0.1  # radians (~5.7 degrees)
         self.last_published_state = {}
+
+        # デバッグ用カウンター
+        self.update_count = {}
 
     def should_publish_update(self, robot_id: str, new_position: Dict,
                               new_heading: float) -> bool:
@@ -66,15 +69,18 @@ class StatePublisher:
         """
         try:
             # 1. 座標変換
-            # converter.map_to_gps_coordinates は {'lat': float, 'lng': float} を返すと仮定
             gps_coords = self.converter.map_to_gps_coordinates(map_x, map_y)
 
             # 2. フィルタリングチェック
             if not self.should_publish_update(robot_id, gps_coords, heading):
                 return
 
-            # 3. データを準備 (GeoPoint オブジェクトの作成)
-            # Note: GeoPointオブジェクトは update_data に含め、FirebaseClient で処理されるようにする
+            # デバッグログ（更新回数をカウント）
+            if robot_id not in self.update_count:
+                self.update_count[robot_id] = 0
+            self.update_count[robot_id] += 1
+
+            # 3. データを準備
             update_data = {
                 'position': firestore.GeoPoint(gps_coords['lat'], gps_coords['lng']),
                 'heading': heading,
@@ -94,10 +100,10 @@ class StatePublisher:
                 'heading': heading
             }
 
-            self.logger.debug(
-                f"Published state for {robot_id}: "
+            self.logger.info(
+                f"📍 位置更新 #{self.update_count[robot_id]}: {robot_id} → "
                 f"GPS({gps_coords['lat']:.6f}, {gps_coords['lng']:.6f}), "
-                f"heading={heading:.2f}rad"
+                f"MAP({map_x:.2f}, {map_y:.2f}), heading={heading:.2f}rad"
             )
 
         except Exception as e:
@@ -127,9 +133,6 @@ class RobotStateTracker:
         self.publisher = state_publisher
         self.robots = {}  # robot_id -> latest state
 
-        # RobotStateTracker は単なるデータ集約ロジックとして機能させるため、
-        # Odomメッセージの処理は update_from_odom メソッドで実行する
-
     def update_from_odom(self, robot_id: str, odom_msg):
         """Update robot state from odometry message."""
         try:
@@ -139,9 +142,6 @@ class RobotStateTracker:
 
             # Extract heading from quaternion
             q = odom_msg.pose.pose.orientation
-            # Note: _quaternion_to_yaw はこのクラスの外部に定義されているか、
-            # tf_transformations からインポートして使用することを推奨します。
-            # ここでは便宜上、クラスメソッドとして実装。
             heading = self._quaternion_to_yaw(q.x, q.y, q.z, q.w)
 
             # Calculate speed
@@ -156,11 +156,9 @@ class RobotStateTracker:
                 'speed': speed
             }
 
-            # Publish to Firebase (with smart filtering)
-            # Note: 速度は sensor_aggregator 側で処理するため、ここでは status update のみに集中
+            # 🚨 重要: Firebaseへの位置更新を実行
             self.publisher.publish_state(
                 robot_id, map_x, map_y, heading
-                # additional_data={'telemetry': {'speed': speed}} は sensor_aggregator に任せる
             )
 
         except Exception as e:
