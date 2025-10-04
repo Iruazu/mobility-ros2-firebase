@@ -1,0 +1,4 @@
+[console_scripts]
+coordinate_test = ros2_firebase_bridge.test_coordinates:main
+firebase_bridge = ros2_firebase_bridge.firebase_bridge_node:main
+

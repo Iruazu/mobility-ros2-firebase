@@ -1,0 +1,49 @@
+running develop
+Removing /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2-firebase-bridge.egg-link (link to .)
+running egg_info
+writing ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/PKG-INFO
+writing dependency_links to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/dependency_links.txt
+writing entry points to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/entry_points.txt
+writing requirements to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
+writing top-level names to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
+reading manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+writing manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build
+creating /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib
+creating /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/firebase_client.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/test_coordinates.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/coordinate_converter.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/__init__.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+copying ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+running install
+running install_lib
+creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_client.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/test_coordinates.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/coordinate_converter.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/__init__.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py to firebase_bridge_node.cpython-310.pyc
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_client.py to firebase_client.cpython-310.pyc
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/sensor_aggregator.py to sensor_aggregator.cpython-310.pyc
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/test_coordinates.py to test_coordinates.cpython-310.pyc
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/coordinate_converter.py to coordinate_converter.cpython-310.pyc
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/__init__.py to __init__.cpython-310.pyc
+byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py to state_publisher.cpython-310.pyc
+running install_data
+copying resource/ros2_firebase_bridge -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ament_index/resource_index/packages
+copying package.xml -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge
+copying config/firebase_config.yaml -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config
+running install_egg_info
+Copying ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info
+running install_scripts
+Installing coordinate_test script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+Installing firebase_bridge script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+writing list of installed files to '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log'
