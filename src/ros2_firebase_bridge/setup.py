@@ -7,7 +7,8 @@ package_name = 'ros2_firebase_bridge'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=find_packages(),
+    # パッケージのインストールを確実にするため、パッケージ名を明示的に指定
+    packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -31,12 +32,6 @@ setup(
     entry_points={
         'console_scripts': [
             'firebase_bridge = ros2_firebase_bridge.firebase_bridge_node:main',
-            # 'coordinate_test = ros2_firebase_bridge.test_coordinates:main',  # ← 削除済み
         ],
     },
-    # スクリプトのインストール（scriptsディレクトリのファイルを実行可能にする）
-    scripts=[
-        'scripts/test_firebase.py',
-        'scripts/build_and_run.sh',
-    ],
 )

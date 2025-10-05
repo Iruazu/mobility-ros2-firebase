@@ -114,5 +114,6 @@ colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\share/ros2_f
 colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\share/ros2_firebase_bridge/hook/pythonpath.ps1"
 colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\share/ros2_firebase_bridge/hook/pythonscriptspath.ps1"
 colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\share/ros2_firebase_bridge/hook/ament_prefix_path.ps1"
+colcon_package_source_powershell_script "$env:COLCON_CURRENT_PREFIX\../../build/ros2_firebase_bridge/share/ros2_firebase_bridge/hook/pythonpath_develop.ps1"
 
 Remove-Item Env:\COLCON_CURRENT_PREFIX
