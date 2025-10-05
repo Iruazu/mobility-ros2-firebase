@@ -31,7 +31,12 @@ setup(
     entry_points={
         'console_scripts': [
             'firebase_bridge = ros2_firebase_bridge.firebase_bridge_node:main',
-            'coordinate_test = ros2_firebase_bridge.test_coordinates:main',
+            # 'coordinate_test = ros2_firebase_bridge.test_coordinates:main',  # ← 削除済み
         ],
     },
+    # スクリプトのインストール（scriptsディレクトリのファイルを実行可能にする）
+    scripts=[
+        'scripts/test_firebase.py',
+        'scripts/build_and_run.sh',
+    ],
 )
