@@ -1,1 +1,0 @@
-/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge/build/ros2_firebase_bridge/launch/yoto_campus_sim.launch.py

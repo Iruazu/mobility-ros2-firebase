@@ -7,10 +7,6 @@ setup.py
 ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
 ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
 ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/zip-safe
-config/firebase_config.yaml
-launch/yoto_campus_full.launch.py
-launch/yoto_campus_sim.launch.py
-models/yoto_campus/yoto7.dae
 resource/ros2_firebase_bridge
 ros2_firebase_bridge/__init__.py
 ros2_firebase_bridge/coordinate_converter.py
@@ -18,5 +14,3 @@ ros2_firebase_bridge/firebase_bridge_node.py
 ros2_firebase_bridge/firebase_client.py
 ros2_firebase_bridge/sensor_aggregator.py
 ros2_firebase_bridge/state_publisher.py
-worlds/yoto_campus.world
-worlds/yoto_campus_simple.world
