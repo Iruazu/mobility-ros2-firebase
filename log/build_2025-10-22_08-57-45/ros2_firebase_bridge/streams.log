@@ -1,0 +1,52 @@
+[4.423s] Invoking command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --uninstall --editable --build-directory /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build
+[5.728s] running develop
+[6.350s] Removing /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2-firebase-bridge.egg-link (link to .)
+[6.516s] Invoked command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge' returned '0': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --uninstall --editable --build-directory /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build
+[6.523s] Invoking command in '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_firebase_bridge build --build-base /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build install --record /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log --single-version-externally-managed install_data --force
+[7.727s] running egg_info
+[7.744s] writing ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/PKG-INFO
+[7.747s] writing dependency_links to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/dependency_links.txt
+[7.748s] writing entry points to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/entry_points.txt
+[7.749s] writing requirements to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
+[7.750s] writing top-level names to ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
+[7.758s] reading manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[7.764s] writing manifest file '../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/SOURCES.txt'
+[7.765s] running build
+[7.766s] running build_py
+[7.766s] copying ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[7.767s] copying ros2_firebase_bridge/firebase_client.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[7.767s] copying ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[7.767s] copying ros2_firebase_bridge/coordinate_converter.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[7.768s] copying ros2_firebase_bridge/__init__.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[7.768s] copying ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge
+[7.769s] running install
+[7.770s] running install_lib
+[7.781s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_bridge_node.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[7.783s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/firebase_client.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[7.784s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/sensor_aggregator.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[7.786s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/coordinate_converter.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[7.787s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/__init__.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[7.788s] copying /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build/lib/ros2_firebase_bridge/state_publisher.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge
+[7.794s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_bridge_node.py to firebase_bridge_node.cpython-310.pyc
+[7.820s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/firebase_client.py to firebase_client.cpython-310.pyc
+[7.829s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/sensor_aggregator.py to sensor_aggregator.cpython-310.pyc
+[7.835s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/coordinate_converter.py to coordinate_converter.cpython-310.pyc
+[7.841s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/__init__.py to __init__.cpython-310.pyc
+[7.842s] byte-compiling /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/state_publisher.py to state_publisher.cpython-310.pyc
+[7.853s] running install_data
+[7.854s] copying resource/ros2_firebase_bridge -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ament_index/resource_index/packages
+[7.855s] copying package.xml -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge
+[7.858s] copying launch/yoto_campus_full.launch.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/launch
+[7.868s] copying launch/yoto_campus_sim.launch.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/launch
+[7.871s] copying worlds/yoto_campus.world -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/worlds
+[7.875s] copying worlds/yoto_campus_simple.world -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/worlds
+[7.878s] copying config/firebase_config.yaml -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config
+[7.904s] copying models/yoto_campus/yoto7.dae -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/models/yoto_campus
+[7.921s] running install_egg_info
+[7.921s] removing '/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info' (and everything under it)
+[7.944s] Copying ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge-0.0.1-py3.10.egg-info
+[7.945s] running install_scripts
+[8.044s] Installing firebase_bridge script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[8.051s] Installing test_tools script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[8.055s] writing list of installed files to '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log'
+[8.175s] Invoked command in '/workspaces/mobility-ros2-firebase/src/ros2_firebase_bridge' returned '0': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_firebase_bridge build --build-base /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build install --record /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/install.log --single-version-externally-managed install_data --force

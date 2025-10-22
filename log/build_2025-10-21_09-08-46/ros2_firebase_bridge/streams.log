@@ -1,0 +1,18 @@
+[0.598s] Invoking command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build --no-deps symlink_data
+[0.871s] running develop
+[0.995s] running egg_info
+[0.995s] writing ros2_firebase_bridge.egg-info/PKG-INFO
+[0.995s] writing dependency_links to ros2_firebase_bridge.egg-info/dependency_links.txt
+[0.996s] writing entry points to ros2_firebase_bridge.egg-info/entry_points.txt
+[0.996s] writing requirements to ros2_firebase_bridge.egg-info/requires.txt
+[0.996s] writing top-level names to ros2_firebase_bridge.egg-info/top_level.txt
+[0.999s] reading manifest file 'ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.000s] writing manifest file 'ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.001s] running build_ext
+[1.001s] Creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2-firebase-bridge.egg-link (link to .)
+[1.002s] Installing firebase_bridge script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[1.002s] Installing test_tools script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[1.003s] 
+[1.003s] Installed /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge
+[1.003s] running symlink_data
+[1.038s] Invoked command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge' returned '0': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build --no-deps symlink_data

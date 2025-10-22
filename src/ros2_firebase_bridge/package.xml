@@ -8,7 +8,6 @@
   <maintainer email="developer@mobility.com">Developer</maintainer>
   <license>MIT</license>
 
-  <!-- Build tool -->
   <buildtool_depend>ament_python</buildtool_depend>
 
   <!-- ROS2 dependencies -->
@@ -21,10 +20,14 @@
   <depend>tf2_ros</depend>
   <depend>action_msgs</depend>
 
-  <!-- Python dependencies -->
+  <!-- ★★★ 以下を追加 ★★★ -->
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>turtlebot3_gazebo</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+
   <exec_depend>python3-yaml</exec_depend>
 
-  <!-- Test dependencies -->
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
@@ -32,5 +35,6 @@
 
   <export>
     <build_type>ament_python</build_type>
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
   </export>
 </package>

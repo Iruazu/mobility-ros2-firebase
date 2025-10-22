@@ -1,0 +1,27 @@
+[0.667s] Invoking command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build --no-deps symlink_data
+[0.900s] running develop
+[1.039s] running egg_info
+[1.041s] writing ros2_firebase_bridge.egg-info/PKG-INFO
+[1.043s] writing dependency_links to ros2_firebase_bridge.egg-info/dependency_links.txt
+[1.043s] writing entry points to ros2_firebase_bridge.egg-info/entry_points.txt
+[1.044s] writing requirements to ros2_firebase_bridge.egg-info/requires.txt
+[1.044s] writing top-level names to ros2_firebase_bridge.egg-info/top_level.txt
+[1.047s] reading manifest file 'ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.047s] writing manifest file 'ros2_firebase_bridge.egg-info/SOURCES.txt'
+[1.050s] running build_ext
+[1.050s] Creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2-firebase-bridge.egg-link (link to .)
+[1.051s] Installing firebase_bridge script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[1.052s] Installing test_tools script to /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/bin
+[1.053s] 
+[1.053s] Installed /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge
+[1.053s] running symlink_data
+[1.053s] creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/launch
+[1.054s] symbolically linking /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/launch/yoto_campus_sim.launch.py -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/launch
+[1.055s] creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/worlds
+[1.055s] symbolically linking /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/worlds/yoto_campus.world -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/worlds
+[1.055s] creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/maps
+[1.055s] creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/models
+[1.055s] creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/models/yoto_campus
+[1.055s] symbolically linking /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/models/yoto_campus/yoto7.dae -> /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/models/yoto_campus
+[1.056s] creating /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config/rviz
+[1.081s] Invoked command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge' returned '0': PYTHONPATH=/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge/build --no-deps symlink_data
