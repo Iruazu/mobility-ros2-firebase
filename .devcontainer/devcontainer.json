@@ -2,27 +2,31 @@
     "name": "ROS2 Firebase Mobility Platform",
     "dockerFile": "Dockerfile",
     "context": "..",
-    
     "mounts": [
         "source=${localWorkspaceFolder},target=/workspace,type=bind",
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        // ★★★ WSLg/GPU アクセラレーションのために以下の2行を追加 ★★★
+        "source=/mnt/wslg,target=/mnt/wslg,type=bind",
+        "source=/usr/lib/wsl/lib,target=/usr/lib/wsl/lib,type=bind"
     ],
-    
     "runArgs": [
         "--net=host",
         "--privileged",
+        // ★★★ Intel GPU (WSLg) デバイスへのアクセス許可のために以下の2行を追加 ★★★
+        "--device",
+        "/dev/dxg",
+        "--device",
+        "/dev/dri",
         "--env=DISPLAY=${localEnv:DISPLAY}",
         "--env=WAYLAND_DISPLAY=${localEnv:WAYLAND_DISPLAY}",
         "--env=XDG_RUNTIME_DIR=${localEnv:XDG_RUNTIME_DIR}",
         "--env=PULSE_SERVER=unix:${localEnv:XDG_RUNTIME_DIR}/pulse/native"
     ],
-
     "containerEnv": {
         "DISPLAY": "${localEnv:DISPLAY}",
         "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
         "XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}"
     },
-
     "customizations": {
         "vscode": {
             "extensions": [
@@ -47,8 +51,6 @@
             }
         }
     },
-
     "postCreateCommand": "sudo rosdep update && rosdep install --from-paths src --ignore-src -r -y",
-    
     "remoteUser": "developer"
 }
