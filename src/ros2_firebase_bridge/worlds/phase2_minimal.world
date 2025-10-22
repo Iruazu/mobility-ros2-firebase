@@ -1,0 +1,140 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="phase2_minimal_world">
+    
+    <!-- ===== 物理エンジン設定(最軽量) ===== -->
+    <physics type="ode">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>100</real_time_update_rate>
+    </physics>
+
+    <!-- ===== 太陽光(簡易) ===== -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- ===== 地面(5m × 5m シンプルな平面) ===== -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>10 10</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>10 10</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== 障害物1: シンプルな箱 ===== -->
+    <model name="obstacle_box_1">
+      <static>true</static>
+      <pose>1.5 0 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.5</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.3 0.7 1</ambient>
+            <diffuse>0.3 0.3 0.7 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== 障害物2: 円柱 ===== -->
+    <model name="obstacle_cylinder_1">
+      <static>true</static>
+      <pose>-1.5 1.5 0.3 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.3</radius>
+              <length>0.6</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.3</radius>
+              <length>0.6</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.7 0.3 0.3 1</ambient>
+            <diffuse>0.7 0.3 0.3 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== 障害物3: 小さい箱 ===== -->
+    <model name="obstacle_box_2">
+      <static>true</static>
+      <pose>-1.0 -1.5 0.15 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.3 0.3 0.3</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.3 0.3 0.3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.7 0.3 1</ambient>
+            <diffuse>0.3 0.7 0.3 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== シーン設定 ===== -->
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>false</shadows> <!-- 影オフで軽量化 -->
+    </scene>
+
+    <!-- ===== GUI設定(軽量) ===== -->
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>0 -5 3 0 0.4 1.57</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
+  </world>
+</sdf>

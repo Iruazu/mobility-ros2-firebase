@@ -1,0 +1,51 @@
+firebase:
+  service_account_key: "/workspace/config/serviceAccountKey.json"
+  database_url: "https://mobility-map-ae58e.firebaseio.com"
+
+ros2:
+  robot_namespace: "/turtlebot3"
+  goal_topic: "/goal_pose"
+  odom_topic: "/odom"
+  status_topic: "/robot_status"
+
+coordinate_system:
+  # マップ座標系の原点（GPS座標）
+  origin_latitude: 36.55077
+  origin_longitude: 139.92957
+
+  # フレーム設定
+  map_frame: "map"
+  base_frame: "base_link"
+
+  # 🚨 重要: スケールファクター
+  # GPS距離をマップ距離に変換する係数
+  # 0.01 = GPS上の100m → マップ上の1m
+  # シミュレーション用: 0.01 (推奨)
+  # 実機用: 1.0 (GPS距離 = マップ距離)
+  scale_factor: 0.01
+
+  # マップ範囲制限（メートル）
+  # TurtleBot3 Worldマップのサイズに合わせる
+  map_bounds:
+    x_min: -4.0
+    x_max: 4.0
+    y_min: -4.0
+    y_max: 4.0
+
+# ナビゲーション設定
+navigation:
+  # ゴール到達判定距離（メートル）
+  goal_tolerance: 0.3
+
+  # タイムアウト設定（秒）
+  navigation_timeout: 300
+
+  # リトライ設定
+  max_retries: 3
+  retry_delay: 5.0
+
+# テレメトリ送信間隔（秒）
+telemetry:
+  update_interval: 2.0
+  position_update_interval: 2.0
+  sensor_update_interval: 1.0

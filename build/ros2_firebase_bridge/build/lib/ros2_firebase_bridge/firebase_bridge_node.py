@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Firebase-ROS2 Bridge - 無限ループ完全防止版
-"""
-
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -24,15 +19,33 @@ from ros2_firebase_bridge.sensor_aggregator import SensorAggregator
 import yaml
 import os
 import math
-from typing import Dict, Any
 import hashlib
+import threading
+from typing import Dict, Any, Optional
 
 
-class EnhancedFirebaseBridge(Node):
-    """無限ループ防止機能を強化したFirebase-ROS2 Bridge"""
+class Phase2FirebaseBridge(Node):
+    """
+    Phase 2完全版 Firebase-ROS2 Bridge
+
+    主要改善点:
+    1. 無限ループ完全防止 (丸め誤差対応 + 処理ロック)
+    2. 位置同期最適化 (移動距離ベース + 動的間隔調整)
+    3. 複数ロボット対応 (launch引数でrobot_id設定可能)
+    """
 
     def __init__(self):
-        super().__init__('enhanced_firebase_bridge')
+        super().__init__('phase2_firebase_bridge')
+
+        # ===== Phase 2: 複数ロボット対応 =====
+        self.declare_parameter('robot_id', 'robot_001')
+        self.declare_parameter('robot_namespace', '/turtlebot3')
+
+        self.robot_id = self.get_parameter('robot_id').value
+        self.robot_namespace = self.get_parameter('robot_namespace').value
+
+        self.get_logger().info(f"🤖 Robot ID: {self.robot_id}")
+        self.get_logger().info(f"📡 Namespace: {self.robot_namespace}")
 
         self.config = self.load_config()
         self.callback_group = ReentrantCallbackGroup()
@@ -45,36 +58,41 @@ class EnhancedFirebaseBridge(Node):
         self.sensor_aggregator = None
 
         # Robot state
-        self.robot_id = "robot_001"
         self.current_goal = None
         self.navigation_active = False
         self.goal_handle = None
 
-        # 🚨 無限ループ防止の強化
-        self.last_processed_destination = None
-        self.destination_hash = None  # destination のハッシュ値を保存
+        # ===== Phase 2改善: 無限ループ防止の強化 =====
+        self.destination_lock = threading.Lock()  # 🔒 スレッドセーフな処理
+        self.last_processed_destination_hash = None
         self.processing_navigation = False
+        self.destination_processing_count = {}  # 重複検知カウンター
+
+        # Phase 2改善: 位置同期最適化
         self.last_position_update_time = 0.0
-        self.position_update_cooldown = 2.0  # 位置更新の最小間隔を2秒に変更
+        self.last_published_position = None
+        self.position_threshold = 0.5  # 0.5m以上移動で更新
+        self.update_interval_moving = 1.0  # 移動中: 1秒
+        self.update_interval_idle = 5.0     # 停止中: 5秒
 
         self.setup_ros2_interfaces()
         self.firebase_init_timer = self.create_timer(
             1.0, self.initialize_firebase, callback_group=self.callback_group
         )
 
-        self.get_logger().info("🚀 Enhanced Firebase Bridge (Loop Prevention) started")
+        self.get_logger().info("🚀 Phase 2 Firebase Bridge started")
 
     def load_config(self) -> Dict[str, Any]:
-        """Load configuration from YAML file."""
+        """設定ファイル読み込み"""
         try:
-            possible_paths = [
+            config_paths = [
+                '/workspace/config/rviz/firebase_config.yaml',
                 os.path.join(os.path.dirname(__file__), '..', 'config', 'firebase_config.yaml'),
-                '/workspace/config/firebase_config.yaml',
             ]
 
-            for config_path in possible_paths:
-                if os.path.exists(config_path):
-                    with open(config_path, 'r') as f:
+            for path in config_paths:
+                if os.path.exists(path):
+                    with open(path, 'r') as f:
                         return yaml.safe_load(f)
 
             return self.get_default_config()
@@ -83,33 +101,40 @@ class EnhancedFirebaseBridge(Node):
             return self.get_default_config()
 
     def get_default_config(self) -> Dict[str, Any]:
-        """Return default configuration."""
+        """デフォルト設定"""
         return {
             'firebase': {
                 'service_account_key': '/workspace/config/serviceAccountKey.json'
             },
             'ros2': {
-                'robot_namespace': '/turtlebot3',
-                'odom_topic': '/odom',
+                'robot_namespace': self.robot_namespace,
+                'odom_topic': f'{self.robot_namespace}/odom',
             },
             'coordinate_system': {
                 'origin_latitude': 36.55077,
                 'origin_longitude': 139.92957,
-                'map_frame': 'map'
+                'map_frame': 'map',
+                'scale_factor': 0.01
             }
         }
 
     def setup_ros2_interfaces(self):
-        """Setup all ROS2 publishers and subscribers."""
+        """ROS2インターフェース設定"""
         try:
-            self.goal_publisher = self.create_publisher(PoseStamped, '/goal_pose', 10)
-            self.nav_action_client = ActionClient(self, NavigateToPose, '/navigate_to_pose')
+            # トピック名をnamespace対応に変更
+            odom_topic = f'{self.robot_namespace}/odom'
+            scan_topic = f'{self.robot_namespace}/scan'
+            goal_topic = f'{self.robot_namespace}/goal_pose'
+            nav_action = f'{self.robot_namespace}/navigate_to_pose'
+
+            self.goal_publisher = self.create_publisher(PoseStamped, goal_topic, 10)
+            self.nav_action_client = ActionClient(self, NavigateToPose, nav_action)
 
             self.odom_subscriber = self.create_subscription(
-                Odometry, '/odom', self.odom_callback, 10
+                Odometry, odom_topic, self.odom_callback, 10
             )
             self.scan_subscriber = self.create_subscription(
-                LaserScan, '/scan', self.scan_callback, 10
+                LaserScan, scan_topic, self.scan_callback, 10
             )
 
             self.get_logger().info("✅ ROS2 interfaces configured")
@@ -117,7 +142,7 @@ class EnhancedFirebaseBridge(Node):
             self.get_logger().error(f"ROS2 interface setup error: {e}")
 
     def initialize_firebase(self):
-        """Initialize Firebase connection."""
+        """Firebase接続初期化"""
         try:
             if self.firebase_client is not None:
                 return
@@ -133,6 +158,7 @@ class EnhancedFirebaseBridge(Node):
             self.coordinate_converter = CoordinateConverter(
                 origin_lat=coord_config['origin_latitude'],
                 origin_lng=coord_config['origin_longitude'],
+                scale_factor=coord_config.get('scale_factor', 0.01),
                 logger=self.get_logger()
             )
 
@@ -144,7 +170,7 @@ class EnhancedFirebaseBridge(Node):
                 self, self.robot_id, self.firebase_client, self.get_logger()
             )
 
-            # Firestore リスナー設定
+            # Firestoreリスナー設定
             self.firebase_client.setup_realtime_listener(
                 'robots', self.on_firestore_update
             )
@@ -162,13 +188,13 @@ class EnhancedFirebaseBridge(Node):
             self.get_logger().error(f"Firebase initialization error: {e}")
 
     def initialize_robot_in_firebase(self):
-        """Ensure robot document exists in Firebase."""
+        """Firebaseにロボット情報を初期化"""
         try:
             robot_data = self.firebase_client.get_robot_data(self.robot_id)
             if robot_data is None:
                 initial_data = {
                     'id': self.robot_id,
-                    'name': 'TurtleBot3 Alpha',
+                    'name': f'TurtleBot3-{self.robot_id[-3:]}',
                     'status': 'idle',
                     'position': firestore.GeoPoint(
                         self.config['coordinate_system']['origin_latitude'],
@@ -185,91 +211,109 @@ class EnhancedFirebaseBridge(Node):
                 self.firebase_client.db.collection('robots').document(
                     self.robot_id
                 ).set(initial_data)
-                self.get_logger().info(f"✅ Initialized robot {self.robot_id}")
+                self.get_logger().info(f"✅ Robot {self.robot_id} initialized in Firebase")
         except Exception as e:
             self.get_logger().error(f"Robot initialization error: {e}")
 
     def calculate_destination_hash(self, destination) -> str:
-        """destination の一意なハッシュ値を計算"""
+        """
+        Phase 2改善: 丸め誤差に強いハッシュ計算
+        小数点5桁(約1.1m精度)に丸めることで、Firebase往復での微小誤差を吸収
+        """
         if destination is None:
             return None
 
-        lat_str = f"{destination.latitude:.8f}"
-        lng_str = f"{destination.longitude:.8f}"
-        hash_input = f"{lat_str}_{lng_str}"
+        lat_rounded = round(destination.latitude, 5)
+        lng_rounded = round(destination.longitude, 5)
+        hash_input = f"{lat_rounded:.5f}_{lng_rounded:.5f}"
 
         return hashlib.md5(hash_input.encode()).hexdigest()
 
     def on_firestore_update(self, robot_id: str, robot_data: Dict[str, Any], change_type: str):
-        """🚨 無限ループ防止を強化した Firestore 更新ハンドラ"""
+        """
+        Phase 2改善: 無限ループ完全防止版 Firestore更新ハンドラ
+
+        防止機構:
+        1. スレッドロックによる排他制御
+        2. 丸め誤差に強いハッシュ比較
+        3. 処理カウンターによる異常検知
+        """
         try:
             if robot_id != self.robot_id:
                 return
-
-            self.get_logger().debug(f"📨 Firestore update: {robot_id} - {change_type}")
 
             # 1️⃣ ナビゲーション処理中は無視
             if self.processing_navigation:
                 self.get_logger().debug("⏸️ Navigation processing, skipping")
                 return
 
-            # 2️⃣ destination の確認
+            # 2️⃣ destinationの存在確認
             if 'destination' not in robot_data or not robot_data['destination']:
                 return
 
             destination = robot_data['destination']
 
-            # 3️⃣ destination のハッシュ値をチェック
-            new_hash = self.calculate_destination_hash(destination)
+            # 3️⃣ 🔒 スレッドロックで排他制御
+            with self.destination_lock:
+                new_hash = self.calculate_destination_hash(destination)
 
-            if new_hash == self.destination_hash:
-                self.get_logger().debug("⏸️ Same destination hash, skipping")
-                return
+                # 4️⃣ ハッシュ比較による重複検知
+                if new_hash == self.last_processed_destination_hash:
+                    self.get_logger().debug(f"⏸️ Duplicate destination hash: {new_hash[:8]}")
+                    return
 
-            # 4️⃣ 新しい destination として処理
-            self.destination_hash = new_hash
-            self.last_processed_destination = destination
+                # 5️⃣ 異常な重複回数チェック
+                if new_hash not in self.destination_processing_count:
+                    self.destination_processing_count[new_hash] = 0
 
-            self.get_logger().info(
-                f"🎯 New destination detected: ({destination.latitude:.6f}, {destination.longitude:.6f})"
-            )
+                self.destination_processing_count[new_hash] += 1
 
+                if self.destination_processing_count[new_hash] > 3:
+                    self.get_logger().error(
+                        f"🚨 無限ループ検知! Hash {new_hash[:8]} が "
+                        f"{self.destination_processing_count[new_hash]}回処理されました"
+                    )
+                    return
+
+                # 6️⃣ 新しいdestinationとして処理
+                self.last_processed_destination_hash = new_hash
+
+                self.get_logger().info(
+                    f"🎯 New destination: ({destination.latitude:.6f}, {destination.longitude:.6f}) "
+                    f"[Hash: {new_hash[:8]}]"
+                )
+
+            # 7️⃣ ナビゲーションゴール送信
             self.send_navigation_goal(destination)
 
         except Exception as e:
             self.get_logger().error(f"Firestore update error: {e}")
 
     def send_navigation_goal(self, destination):
-        """Send navigation goal to Nav2 with validation."""
+        """Phase 2: ゴール検証強化版"""
         try:
             self.processing_navigation = True
 
-            # ✅ ゴール検証を追加
+            # ゴール有効性検証
             is_valid, error_msg = self.coordinate_converter.validate_goal(
                 destination.latitude, destination.longitude
             )
 
             if not is_valid:
-                self.get_logger().error(f"❌ 無効なゴール: {error_msg}")
+                self.get_logger().error(f"❌ Invalid goal: {error_msg}")
 
-                # 最も近い安全な座標を取得
+                # 最も近い安全な座標に補正
                 safe_goal = self.coordinate_converter.get_safe_goal_near(
                     destination.latitude, destination.longitude
                 )
                 self.get_logger().warning(
-                    f"🔧 安全な座標に補正: ({safe_goal['lat']:.6f}, {safe_goal['lng']:.6f})"
+                    f"🔧 Corrected to safe goal: ({safe_goal['lat']:.6f}, {safe_goal['lng']:.6f})"
                 )
 
-                # 補正後の座標でゴールを作成
                 goal_pose = self.coordinate_converter.create_pose_stamped(
                     safe_goal['lat'], safe_goal['lng'], frame_id='map'
                 )
             else:
-                # 通常のゴール作成
-                self.get_logger().info(
-                    f"🎯 Navigation goal: ({destination.latitude:.6f}, {destination.longitude:.6f})"
-                )
-
                 goal_pose = self.coordinate_converter.create_pose_stamped(
                     destination.latitude, destination.longitude, frame_id='map'
                 )
@@ -297,7 +341,7 @@ class EnhancedFirebaseBridge(Node):
             self.processing_navigation = False
 
     def nav_goal_response_callback(self, future):
-        """Handle Nav2 goal response."""
+        """Nav2ゴールレスポンス処理"""
         try:
             goal_handle = future.result()
 
@@ -319,108 +363,150 @@ class EnhancedFirebaseBridge(Node):
             self.processing_navigation = False
 
     def nav_feedback_callback(self, feedback_msg):
-        """Handle Nav2 feedback."""
+        """Nav2フィードバック処理(現在は何もしない)"""
         pass
 
     def nav_result_callback(self, future):
-        """Handle Nav2 result."""
+        """
+        Phase 2改善: ナビゲーション完了処理
+        destinationを確実に削除して無限ループを防止
+        """
         try:
             status = future.result().status
 
             if status == GoalStatus.STATUS_SUCCEEDED:
-                self.get_logger().info("🎉 Navigation completed")
+                self.get_logger().info("🎉 Navigation completed successfully")
             else:
                 self.get_logger().warning(f"⚠️ Navigation failed: {status}")
 
-            # 🚨 destination を削除してループを防止
-            self.firebase_client.update_robot_state(
-                self.robot_id,
-                {
-                    'destination': firestore.DELETE_FIELD,
-                    'status': 'idle'
-                }
-            )
+            # 🚨 destinationを削除してループ防止
+            with self.destination_lock:
+                self.firebase_client.update_robot_state(
+                    self.robot_id,
+                    {
+                        'destination': firestore.DELETE_FIELD,
+                        'status': 'idle'
+                    }
+                )
 
-            # ハッシュ値とフラグをリセット
-            self.navigation_active = False
-            self.current_goal = None
-            self.goal_handle = None
-            self.destination_hash = None
-            self.last_processed_destination = None
+                # 処理状態をリセット
+                self.navigation_active = False
+                self.current_goal = None
+                self.goal_handle = None
+                self.last_processed_destination_hash = None
+
+                self.get_logger().info("✅ Destination cleared, ready for next task")
 
         except Exception as e:
             self.get_logger().error(f"Nav result error: {e}")
 
     def cancel_navigation(self):
-        """Cancel current navigation."""
+        """ナビゲーションキャンセル"""
         try:
             if self.goal_handle:
                 self.get_logger().info("🛑 Cancelling navigation")
                 self.goal_handle.cancel_goal_async()
 
-            self.navigation_active = False
-            self.current_goal = None
-            self.goal_handle = None
-            self.processing_navigation = False
-            self.destination_hash = None
+            with self.destination_lock:
+                self.navigation_active = False
+                self.current_goal = None
+                self.goal_handle = None
+                self.processing_navigation = False
+                self.last_processed_destination_hash = None
 
-            self.firebase_client.update_robot_state(
-                self.robot_id,
-                {
-                    'status': 'idle',
-                    'destination': firestore.DELETE_FIELD
-                }
-            )
+                self.firebase_client.update_robot_state(
+                    self.robot_id,
+                    {
+                        'status': 'idle',
+                        'destination': firestore.DELETE_FIELD
+                    }
+                )
 
         except Exception as e:
             self.get_logger().error(f"Cancel navigation error: {e}")
 
     def odom_callback(self, msg: Odometry):
-        """🚨 位置同期対応 Odometry コールバック"""
+        """
+        Phase 2改善: 位置同期最適化版 Odometry コールバック
+
+        改善点:
+        1. 移動距離ベースの更新判定
+        2. 動的な更新間隔調整(移動中1秒/停止中5秒)
+        """
         if not self.state_tracker or not self.sensor_aggregator:
             return
 
         try:
             current_time = self.get_clock().now().nanoseconds / 1e9
+            current_position = {
+                'x': msg.pose.pose.position.x,
+                'y': msg.pose.pose.position.y
+            }
 
-            # レート制限チェック（1秒に1回）
-            if (current_time - self.last_position_update_time) < self.position_update_cooldown:
-                return
-
-            self.last_position_update_time = current_time
-
-            # 🚨 位置更新を常に実行（Web側マーカー同期のため）
-            # state_tracker内のフィルタリングで無駄な更新は抑制される
-            self.state_tracker.update_from_odom(self.robot_id, msg)
-
-            # 速度更新
+            # 速度計算
             speed = math.sqrt(
                 msg.twist.twist.linear.x**2 + msg.twist.twist.linear.y**2
             )
+
+            # 動的な更新間隔決定
+            is_moving = speed > 0.05  # 0.05 m/s以上で移動中と判定
+            update_interval = self.update_interval_moving if is_moving else self.update_interval_idle
+
+            # 時間ベースのレート制限
+            time_since_update = current_time - self.last_position_update_time
+            if time_since_update < update_interval:
+                # 速度情報だけ更新
+                self.sensor_aggregator.update_motion_state(speed)
+                return
+
+            # 移動距離ベースのチェック
+            should_update = False
+
+            if self.last_published_position is None:
+                should_update = True
+            else:
+                dx = current_position['x'] - self.last_published_position['x']
+                dy = current_position['y'] - self.last_published_position['y']
+                distance = math.sqrt(dx**2 + dy**2)
+
+                if distance >= self.position_threshold:
+                    should_update = True
+                    self.get_logger().debug(
+                        f"📍 Moved {distance:.2f}m (threshold: {self.position_threshold}m)"
+                    )
+
+            # 位置更新実行
+            if should_update:
+                self.state_tracker.update_from_odom(self.robot_id, msg)
+                self.last_position_update_time = current_time
+                self.last_published_position = current_position
+
+            # センサー情報は常に更新
             self.sensor_aggregator.update_motion_state(speed)
 
             # ナビゲーション状態更新
-            current_pose = PoseStamped()
-            current_pose.pose = msg.pose.pose
-
             if self.current_goal and self.navigation_active:
+                current_pose = PoseStamped()
+                current_pose.pose = msg.pose.pose
                 goal_pose = self.coordinate_converter.create_pose_stamped(
                     self.current_goal.latitude, self.current_goal.longitude
                 )
                 self.sensor_aggregator.update_navigation_state(goal_pose, current_pose)
             else:
+                current_pose = PoseStamped()
+                current_pose.pose = msg.pose.pose
                 self.sensor_aggregator.update_navigation_state(None, current_pose)
 
         except Exception as e:
             self.get_logger().error(f"Odom callback error: {e}")
 
     def scan_callback(self, msg: LaserScan):
-        """Handle LiDAR scan."""
+        """LiDARスキャン処理"""
         if self.sensor_aggregator:
             self.sensor_aggregator.scan_callback(msg)
 
     def battery_callback(self, msg: BatteryState):
-        """Handle battery state."""
+        """バッテリー状態処理"""
         if self.sensor_aggregator:
             self.sensor_aggregator.battery_callback(msg)
 
@@ -430,9 +516,9 @@ class EnhancedFirebaseBridge(Node):
             self.sensor_aggregator.publish_telemetry_check()
 
     def shutdown(self):
-        """Clean shutdown."""
+        """クリーンシャットダウン"""
         try:
-            self.get_logger().info("🛑 Shutting down")
+            self.get_logger().info("🛑 Shutting down Phase 2 Bridge")
 
             if self.firebase_client:
                 self.firebase_client.close_listeners()
@@ -445,12 +531,12 @@ class EnhancedFirebaseBridge(Node):
 
 
 def main(args=None):
-    """Main entry point."""
+    """メインエントリーポイント"""
     rclpy.init(args=args)
 
     try:
         executor = MultiThreadedExecutor()
-        node = EnhancedFirebaseBridge()
+        node = Phase2FirebaseBridge()
         executor.add_node(node)
 
         try:

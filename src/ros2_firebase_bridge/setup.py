@@ -6,20 +6,18 @@ package_name = 'ros2_firebase_bridge'
 
 setup(
     name=package_name,
-    version='0.0.1',
+    version='0.0.2',  # Phase 2対応でバージョンアップ
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
 
-        # ★★★ 以下を追加 ★★★
-
-        # Launch files
+        # ===== Phase 2: Launch files =====
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
 
-        # World files
+        # ===== Phase 2: World files =====
         (os.path.join('share', package_name, 'worlds'),
             glob('worlds/*.world')),
 
@@ -48,13 +46,13 @@ setup(
     zip_safe=True,
     maintainer='Developer',
     maintainer_email='developer@mobility.com',
-    description='Firebase-ROS2 Bridge for Personal Mobility Platform',
+    description='Firebase-ROS2 Bridge for Personal Mobility Platform - Phase 2',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'firebase_bridge = ros2_firebase_bridge.firebase_bridge_node:main',
-            'test_tools = ros2_firebase_bridge.test_tools:main',  # 追加
+            'test_tools = ros2_firebase_bridge.test_tools:main',  # 追加（存在する場合）
         ],
     },
 )
