@@ -4,7 +4,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.action import ActionClient
 
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, BatteryState
 from nav2_msgs.action import NavigateToPose
@@ -26,12 +26,13 @@ from typing import Dict, Any, Optional
 
 class Phase2FirebaseBridge(Node):
     """
-    Phase 2完全版 Firebase-ROS2 Bridge
+    Phase 2完全版 Firebase-ROS2 Bridge - 最終修正版
 
     主要改善点:
     1. 無限ループ完全防止 (丸め誤差対応 + 処理ロック)
     2. 位置同期最適化 (移動距離ベース + 動的間隔調整)
     3. 複数ロボット対応 (launch引数でrobot_id設定可能)
+    4. Nav2初期化完了待機機能 (タイマー修正版)
     """
 
     def __init__(self):
@@ -62,6 +63,13 @@ class Phase2FirebaseBridge(Node):
         self.navigation_active = False
         self.goal_handle = None
 
+        # ===== Nav2初期化状態管理 =====
+        self.nav2_ready = False
+        self.initial_pose_set = False
+        self.pending_destination = None  # Nav2準備完了待ちのdestination
+        self.nav2_init_timer = None  # タイマー参照を保持
+        self.nav2_ready_timer = None  # 準備完了タイマー参照を保持
+
         # ===== Phase 2改善: 無限ループ防止の強化 =====
         self.destination_lock = threading.Lock()  # 🔒 スレッドセーフな処理
         self.last_processed_destination_hash = None
@@ -86,7 +94,7 @@ class Phase2FirebaseBridge(Node):
         """設定ファイル読み込み"""
         try:
             config_paths = [
-                '/workspace/config/rviz/firebase_config.yaml',
+                '/workspaces/mobility-ros2-firebase/config/rviz/firebase_config.yaml',
                 os.path.join(os.path.dirname(__file__), '..', 'config', 'firebase_config.yaml'),
             ]
 
@@ -104,11 +112,11 @@ class Phase2FirebaseBridge(Node):
         """デフォルト設定"""
         return {
             'firebase': {
-                'service_account_key': '/workspace/config/serviceAccountKey.json'
+                'service_account_key': '/workspaces/mobility-ros2-firebase/config/serviceAccountKey.json'
             },
             'ros2': {
                 'robot_namespace': self.robot_namespace,
-                'odom_topic': f'{self.robot_namespace}/odom',
+                'odom_topic': '/odom',
             },
             'coordinate_system': {
                 'origin_latitude': 36.55077,
@@ -119,15 +127,26 @@ class Phase2FirebaseBridge(Node):
         }
 
     def setup_ros2_interfaces(self):
-        """ROS2インターフェース設定"""
-        try:
-            # トピック名をnamespace対応に変更
-            odom_topic = f'{self.robot_namespace}/odom'
-            scan_topic = f'{self.robot_namespace}/scan'
-            goal_topic = f'{self.robot_namespace}/goal_pose'
-            nav_action = f'{self.robot_namespace}/navigate_to_pose'
+        """
+        ROS2インターフェース設定 (修正版)
 
+        🔧 重要な変更:
+        - TurtleBot3の標準トピック名を使用 (namespace なし)
+        - 初期位置設定用のパブリッシャーを追加
+        """
+        try:
+            # ===== TurtleBot3の標準トピック名を使用 =====
+            odom_topic = '/odom'
+            scan_topic = '/scan'
+            goal_topic = '/goal_pose'
+            nav_action = '/navigate_to_pose'
+            initial_pose_topic = '/initialpose'
+
+            # Publisher/Subscriber作成
             self.goal_publisher = self.create_publisher(PoseStamped, goal_topic, 10)
+            self.initial_pose_publisher = self.create_publisher(
+                PoseWithCovarianceStamped, initial_pose_topic, 10
+            )
             self.nav_action_client = ActionClient(self, NavigateToPose, nav_action)
 
             self.odom_subscriber = self.create_subscription(
@@ -137,9 +156,98 @@ class Phase2FirebaseBridge(Node):
                 LaserScan, scan_topic, self.scan_callback, 10
             )
 
+            # 🚨 修正: タイマー参照を保持
+            self.nav2_init_timer = self.create_timer(
+                5.0,
+                self.initialize_nav2_pose,
+                callback_group=self.callback_group
+            )
+
+            # 設定を確認のためログ出力
             self.get_logger().info("✅ ROS2 interfaces configured")
+            self.get_logger().info(f"   📍 Odometry: {odom_topic}")
+            self.get_logger().info(f"   🔍 LiDAR Scan: {scan_topic}")
+            self.get_logger().info(f"   🎯 Goal Publisher: {goal_topic}")
+            self.get_logger().info(f"   📌 Initial Pose: {initial_pose_topic}")
+            self.get_logger().info(f"   🧭 Nav2 Action: {nav_action}")
+
         except Exception as e:
-            self.get_logger().error(f"ROS2 interface setup error: {e}")
+            self.get_logger().error(f"❌ ROS2 interface setup error: {e}")
+
+    def initialize_nav2_pose(self):
+        """
+        Nav2の初期位置を設定 (1回のみ実行)
+
+        AMCLが初期位置推定を開始するために必要
+        """
+        try:
+            # 🚨 修正: タイマーを即座にキャンセル
+            if self.nav2_init_timer:
+                self.nav2_init_timer.cancel()
+                self.nav2_init_timer = None
+
+            if self.initial_pose_set:
+                return
+
+            initial_pose = PoseWithCovarianceStamped()
+            initial_pose.header.frame_id = 'map'
+            initial_pose.header.stamp = self.get_clock().now().to_msg()
+
+            # 原点付近を初期位置に設定
+            initial_pose.pose.pose.position.x = 0.0
+            initial_pose.pose.pose.position.y = 0.0
+            initial_pose.pose.pose.position.z = 0.0
+
+            # 向きは正面
+            initial_pose.pose.pose.orientation.w = 1.0
+            initial_pose.pose.pose.orientation.x = 0.0
+            initial_pose.pose.pose.orientation.y = 0.0
+            initial_pose.pose.pose.orientation.z = 0.0
+
+            # 共分散行列 (位置の不確実性)
+            initial_pose.pose.covariance = [0.25] * 36
+            initial_pose.pose.covariance[0] = 0.25  # x
+            initial_pose.pose.covariance[7] = 0.25  # y
+            initial_pose.pose.covariance[35] = 0.06853891909122467  # yaw
+
+            # パブリッシュ
+            self.initial_pose_publisher.publish(initial_pose)
+
+            self.initial_pose_set = True
+            self.get_logger().info("📌 Initial pose published to AMCL")
+
+            # 🚨 修正: 1回だけ実行されるタイマーを作成
+            self.nav2_ready_timer = self.create_timer(
+                3.0,
+                self.mark_nav2_ready,
+                callback_group=self.callback_group
+            )
+
+        except Exception as e:
+            self.get_logger().error(f"Initial pose setup error: {e}")
+
+    def mark_nav2_ready(self):
+        """Nav2が準備完了とマーク (1回のみ実行)"""
+        try:
+            # 🚨 修正: タイマーを即座にキャンセル
+            if self.nav2_ready_timer:
+                self.nav2_ready_timer.cancel()
+                self.nav2_ready_timer = None
+
+            if self.nav2_ready:
+                return
+
+            self.nav2_ready = True
+            self.get_logger().info("✅ Nav2 initialization complete - Ready to navigate!")
+
+            # 待機中のdestinationがあれば処理
+            if self.pending_destination:
+                self.get_logger().info("🔄 Processing pending destination...")
+                self.send_navigation_goal(self.pending_destination)
+                self.pending_destination = None
+
+        except Exception as e:
+            self.get_logger().error(f"Nav2 ready marking error: {e}")
 
     def initialize_firebase(self):
         """Firebase接続初期化"""
@@ -283,16 +391,29 @@ class Phase2FirebaseBridge(Node):
                     f"[Hash: {new_hash[:8]}]"
                 )
 
-            # 7️⃣ ナビゲーションゴール送信
+            # 7️⃣ Nav2準備状態を確認
+            if not self.nav2_ready:
+                self.get_logger().warning("⏳ Nav2 not ready yet - Destination queued")
+                self.pending_destination = destination
+                return
+
+            # 8️⃣ ナビゲーションゴール送信
             self.send_navigation_goal(destination)
 
         except Exception as e:
             self.get_logger().error(f"Firestore update error: {e}")
 
     def send_navigation_goal(self, destination):
-        """Phase 2: ゴール検証強化版"""
+        """Phase 2: ゴール検証強化版 + Nav2待機機能"""
         try:
             self.processing_navigation = True
+
+            # Nav2準備確認
+            if not self.nav2_ready:
+                self.get_logger().warning("⏳ Nav2 not ready - Queuing destination")
+                self.pending_destination = destination
+                self.processing_navigation = False
+                return
 
             # ゴール有効性検証
             is_valid, error_msg = self.coordinate_converter.validate_goal(
@@ -318,23 +439,39 @@ class Phase2FirebaseBridge(Node):
                     destination.latitude, destination.longitude, frame_id='map'
                 )
 
+            # RViz用にゴールをパブリッシュ
             self.goal_publisher.publish(goal_pose)
 
-            if self.nav_action_client.wait_for_server(timeout_sec=2.0):
-                goal_msg = NavigateToPose.Goal()
-                goal_msg.pose = goal_pose
-
-                future = self.nav_action_client.send_goal_async(
-                    goal_msg,
-                    feedback_callback=self.nav_feedback_callback
-                )
-                future.add_done_callback(self.nav_goal_response_callback)
-
-                self.current_goal = destination
-                self.navigation_active = True
-            else:
-                self.get_logger().warning("Nav2 action server not available")
+            # Nav2アクションサーバーに接続
+            if not self.nav_action_client.wait_for_server(timeout_sec=5.0):
+                self.get_logger().error("❌ Nav2 action server not available")
+                self.get_logger().error("   💡 確認: ros2 action list で /navigate_to_pose が表示されるか確認")
                 self.processing_navigation = False
+
+                # Firebaseのステータスを更新
+                self.firebase_client.update_robot_state(
+                    self.robot_id,
+                    {
+                        'status': 'error',
+                        'error_message': 'Nav2 not available'
+                    }
+                )
+                return
+
+            # ゴール送信
+            goal_msg = NavigateToPose.Goal()
+            goal_msg.pose = goal_pose
+
+            future = self.nav_action_client.send_goal_async(
+                goal_msg,
+                feedback_callback=self.nav_feedback_callback
+            )
+            future.add_done_callback(self.nav_goal_response_callback)
+
+            self.current_goal = destination
+            self.navigation_active = True
+
+            self.get_logger().info("✅ Navigation goal sent to Nav2")
 
         except Exception as e:
             self.get_logger().error(f"Navigation goal error: {e}")
@@ -346,12 +483,23 @@ class Phase2FirebaseBridge(Node):
             goal_handle = future.result()
 
             if not goal_handle.accepted:
-                self.get_logger().error("❌ Navigation goal rejected")
+                self.get_logger().error("❌ Navigation goal rejected by Nav2")
+                self.get_logger().error("   💡 ヒント: RVizで '2D Pose Estimate' を使って初期位置を再設定してください")
+
                 self.navigation_active = False
                 self.processing_navigation = False
+
+                # Firebaseステータス更新
+                self.firebase_client.update_robot_state(
+                    self.robot_id,
+                    {
+                        'status': 'error',
+                        'error_message': 'Goal rejected - Check initial pose'
+                    }
+                )
                 return
 
-            self.get_logger().info("✅ Navigation goal accepted")
+            self.get_logger().info("✅ Navigation goal accepted by Nav2")
             self.goal_handle = goal_handle
             self.processing_navigation = False
 
@@ -363,7 +511,7 @@ class Phase2FirebaseBridge(Node):
             self.processing_navigation = False
 
     def nav_feedback_callback(self, feedback_msg):
-        """Nav2フィードバック処理(現在は何もしない)"""
+        """Nav2フィードバック処理"""
         pass
 
     def nav_result_callback(self, future):
@@ -377,7 +525,7 @@ class Phase2FirebaseBridge(Node):
             if status == GoalStatus.STATUS_SUCCEEDED:
                 self.get_logger().info("🎉 Navigation completed successfully")
             else:
-                self.get_logger().warning(f"⚠️ Navigation failed: {status}")
+                self.get_logger().warning(f"⚠️ Navigation failed with status: {status}")
 
             # 🚨 destinationを削除してループ防止
             with self.destination_lock:
