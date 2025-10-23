@@ -7,7 +7,9 @@ setup.py
 ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/requires.txt
 ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/top_level.txt
 ../../build/ros2_firebase_bridge/ros2_firebase_bridge.egg-info/zip-safe
+config/nav2_params.yaml
 launch/multi_robot_firebase_bridge.launch.py
+launch/phase2_minimal.launch.py
 resource/ros2_firebase_bridge
 ros2_firebase_bridge/__init__.py
 ros2_firebase_bridge/coordinate_converter.py

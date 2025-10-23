@@ -12,9 +12,10 @@
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/lib/python3.10/site-packages/ros2_firebase_bridge/__pycache__/state_publisher.cpython-310.pyc
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ament_index/resource_index/packages/ros2_firebase_bridge
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/package.xml
+/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/launch/phase2_minimal.launch.py
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/launch/multi_robot_firebase_bridge.launch.py
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/worlds/phase2_minimal.world
-/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config
+/workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config/nav2_params.yaml
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/maps
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/models/yoto_campus
 /workspaces/mobility-ros2-firebase/install/ros2_firebase_bridge/share/ros2_firebase_bridge/config/rviz

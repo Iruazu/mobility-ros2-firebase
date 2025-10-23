@@ -21,18 +21,20 @@ import os
 import math
 import hashlib
 import threading
+import time
 from typing import Dict, Any, Optional
 
 
 class Phase2FirebaseBridge(Node):
     """
-    Phase 2完全版 Firebase-ROS2 Bridge - 最終修正版
+    Phase 2完全版 Firebase-ROS2 Bridge - メモリリーク対策版
 
     主要改善点:
-    1. 無限ループ完全防止 (丸め誤差対応 + 処理ロック)
+    1. 無限ループ完全防止 (丸め誤差対応 + 処理ロック + メモリ管理)
     2. 位置同期最適化 (移動距離ベース + 動的間隔調整)
     3. 複数ロボット対応 (launch引数でrobot_id設定可能)
     4. Nav2初期化完了待機機能 (タイマー修正版)
+    5. 🆕 メモリリーク対策 (古いハッシュの自動削除)
     """
 
     def __init__(self):
@@ -66,15 +68,16 @@ class Phase2FirebaseBridge(Node):
         # ===== Nav2初期化状態管理 =====
         self.nav2_ready = False
         self.initial_pose_set = False
-        self.pending_destination = None  # Nav2準備完了待ちのdestination
-        self.nav2_init_timer = None  # タイマー参照を保持
-        self.nav2_ready_timer = None  # 準備完了タイマー参照を保持
+        self.pending_destination = None
+        self.nav2_init_timer = None
+        self.nav2_ready_timer = None
 
         # ===== Phase 2改善: 無限ループ防止の強化 =====
-        self.destination_lock = threading.Lock()  # 🔒 スレッドセーフな処理
+        self.destination_lock = threading.Lock()
         self.last_processed_destination_hash = None
         self.processing_navigation = False
-        self.destination_processing_count = {}  # 重複検知カウンター
+        self.destination_processing_count = {}  # hash -> count
+        self.destination_timestamp = {}  # hash -> timestamp (🆕)
 
         # Phase 2改善: 位置同期最適化
         self.last_position_update_time = 0.0
@@ -88,13 +91,20 @@ class Phase2FirebaseBridge(Node):
             1.0, self.initialize_firebase, callback_group=self.callback_group
         )
 
-        self.get_logger().info("🚀 Phase 2 Firebase Bridge started")
+        # 🆕 メモリクリーンアップタイマー（10分ごと）
+        self.cleanup_timer = self.create_timer(
+            600.0,  # 10分
+            self.cleanup_old_destination_hashes,
+            callback_group=self.callback_group
+        )
+
+        self.get_logger().info("🚀 Phase 2 Firebase Bridge started (with memory leak prevention)")
 
     def load_config(self) -> Dict[str, Any]:
         """設定ファイル読み込み"""
         try:
             config_paths = [
-                '/workspaces/mobility-ros2-firebase/config/rviz/firebase_config.yaml',
+                '/workspace/config/rviz/firebase_config.yaml',
                 os.path.join(os.path.dirname(__file__), '..', 'config', 'firebase_config.yaml'),
             ]
 
@@ -112,7 +122,7 @@ class Phase2FirebaseBridge(Node):
         """デフォルト設定"""
         return {
             'firebase': {
-                'service_account_key': '/workspaces/mobility-ros2-firebase/config/serviceAccountKey.json'
+                'service_account_key': '/workspace/config/serviceAccountKey.json'
             },
             'ros2': {
                 'robot_namespace': self.robot_namespace,
@@ -127,22 +137,14 @@ class Phase2FirebaseBridge(Node):
         }
 
     def setup_ros2_interfaces(self):
-        """
-        ROS2インターフェース設定 (修正版)
-
-        🔧 重要な変更:
-        - TurtleBot3の標準トピック名を使用 (namespace なし)
-        - 初期位置設定用のパブリッシャーを追加
-        """
+        """ROS2インターフェース設定"""
         try:
-            # ===== TurtleBot3の標準トピック名を使用 =====
             odom_topic = '/odom'
             scan_topic = '/scan'
             goal_topic = '/goal_pose'
             nav_action = '/navigate_to_pose'
             initial_pose_topic = '/initialpose'
 
-            # Publisher/Subscriber作成
             self.goal_publisher = self.create_publisher(PoseStamped, goal_topic, 10)
             self.initial_pose_publisher = self.create_publisher(
                 PoseWithCovarianceStamped, initial_pose_topic, 10
@@ -156,14 +158,12 @@ class Phase2FirebaseBridge(Node):
                 LaserScan, scan_topic, self.scan_callback, 10
             )
 
-            # 🚨 修正: タイマー参照を保持
             self.nav2_init_timer = self.create_timer(
                 5.0,
                 self.initialize_nav2_pose,
                 callback_group=self.callback_group
             )
 
-            # 設定を確認のためログ出力
             self.get_logger().info("✅ ROS2 interfaces configured")
             self.get_logger().info(f"   📍 Odometry: {odom_topic}")
             self.get_logger().info(f"   🔍 LiDAR Scan: {scan_topic}")
@@ -175,13 +175,8 @@ class Phase2FirebaseBridge(Node):
             self.get_logger().error(f"❌ ROS2 interface setup error: {e}")
 
     def initialize_nav2_pose(self):
-        """
-        Nav2の初期位置を設定 (1回のみ実行)
-
-        AMCLが初期位置推定を開始するために必要
-        """
+        """Nav2の初期位置を設定 (1回のみ実行)"""
         try:
-            # 🚨 修正: タイマーを即座にキャンセル
             if self.nav2_init_timer:
                 self.nav2_init_timer.cancel()
                 self.nav2_init_timer = None
@@ -193,30 +188,25 @@ class Phase2FirebaseBridge(Node):
             initial_pose.header.frame_id = 'map'
             initial_pose.header.stamp = self.get_clock().now().to_msg()
 
-            # 原点付近を初期位置に設定
             initial_pose.pose.pose.position.x = 0.0
             initial_pose.pose.pose.position.y = 0.0
             initial_pose.pose.pose.position.z = 0.0
 
-            # 向きは正面
             initial_pose.pose.pose.orientation.w = 1.0
             initial_pose.pose.pose.orientation.x = 0.0
             initial_pose.pose.pose.orientation.y = 0.0
             initial_pose.pose.pose.orientation.z = 0.0
 
-            # 共分散行列 (位置の不確実性)
             initial_pose.pose.covariance = [0.25] * 36
-            initial_pose.pose.covariance[0] = 0.25  # x
-            initial_pose.pose.covariance[7] = 0.25  # y
-            initial_pose.pose.covariance[35] = 0.06853891909122467  # yaw
+            initial_pose.pose.covariance[0] = 0.25
+            initial_pose.pose.covariance[7] = 0.25
+            initial_pose.pose.covariance[35] = 0.06853891909122467
 
-            # パブリッシュ
             self.initial_pose_publisher.publish(initial_pose)
 
             self.initial_pose_set = True
             self.get_logger().info("📌 Initial pose published to AMCL")
 
-            # 🚨 修正: 1回だけ実行されるタイマーを作成
             self.nav2_ready_timer = self.create_timer(
                 3.0,
                 self.mark_nav2_ready,
@@ -229,7 +219,6 @@ class Phase2FirebaseBridge(Node):
     def mark_nav2_ready(self):
         """Nav2が準備完了とマーク (1回のみ実行)"""
         try:
-            # 🚨 修正: タイマーを即座にキャンセル
             if self.nav2_ready_timer:
                 self.nav2_ready_timer.cancel()
                 self.nav2_ready_timer = None
@@ -240,7 +229,6 @@ class Phase2FirebaseBridge(Node):
             self.nav2_ready = True
             self.get_logger().info("✅ Nav2 initialization complete - Ready to navigate!")
 
-            # 待機中のdestinationがあれば処理
             if self.pending_destination:
                 self.get_logger().info("🔄 Processing pending destination...")
                 self.send_navigation_goal(self.pending_destination)
@@ -278,7 +266,6 @@ class Phase2FirebaseBridge(Node):
                 self, self.robot_id, self.firebase_client, self.get_logger()
             )
 
-            # Firestoreリスナー設定
             self.firebase_client.setup_realtime_listener(
                 'robots', self.on_firestore_update
             )
@@ -337,6 +324,46 @@ class Phase2FirebaseBridge(Node):
 
         return hashlib.md5(hash_input.encode()).hexdigest()
 
+    def cleanup_old_destination_hashes(self):
+        """
+        🆕 メモリリーク対策: 古いハッシュを定期的に削除
+
+        削除対象:
+        - 1時間以上前にタイムスタンプが記録されたハッシュ
+        - 現在処理中でないハッシュ
+
+        これにより長期運用時の辞書肥大化を防止
+        """
+        try:
+            current_time = time.time()
+            keys_to_delete = []
+
+            with self.destination_lock:
+                for hash_key, timestamp in self.destination_timestamp.items():
+                    # 1時間 = 3600秒以上前のハッシュを削除対象に
+                    if current_time - timestamp > 3600:
+                        # 現在処理中のハッシュは保護
+                        if hash_key != self.last_processed_destination_hash:
+                            keys_to_delete.append(hash_key)
+
+                # 削除実行
+                for hash_key in keys_to_delete:
+                    if hash_key in self.destination_processing_count:
+                        del self.destination_processing_count[hash_key]
+                    if hash_key in self.destination_timestamp:
+                        del self.destination_timestamp[hash_key]
+
+                if keys_to_delete:
+                    self.get_logger().info(
+                        f"🧹 Memory cleanup: Removed {len(keys_to_delete)} old destination hashes"
+                    )
+                    self.get_logger().debug(
+                        f"   Remaining hashes: {len(self.destination_processing_count)}"
+                    )
+
+        except Exception as e:
+            self.get_logger().error(f"Cleanup error: {e}")
+
     def on_firestore_update(self, robot_id: str, robot_data: Dict[str, Any], change_type: str):
         """
         Phase 2改善: 無限ループ完全防止版 Firestore更新ハンドラ
@@ -345,37 +372,39 @@ class Phase2FirebaseBridge(Node):
         1. スレッドロックによる排他制御
         2. 丸め誤差に強いハッシュ比較
         3. 処理カウンターによる異常検知
+        4. 🆕 タイムスタンプ記録（メモリ管理用）
         """
         try:
             if robot_id != self.robot_id:
                 return
 
-            # 1️⃣ ナビゲーション処理中は無視
             if self.processing_navigation:
                 self.get_logger().debug("⏸️ Navigation processing, skipping")
                 return
 
-            # 2️⃣ destinationの存在確認
             if 'destination' not in robot_data or not robot_data['destination']:
                 return
 
             destination = robot_data['destination']
 
-            # 3️⃣ 🔒 スレッドロックで排他制御
             with self.destination_lock:
                 new_hash = self.calculate_destination_hash(destination)
 
-                # 4️⃣ ハッシュ比較による重複検知
+                # ハッシュ比較による重複検知
                 if new_hash == self.last_processed_destination_hash:
                     self.get_logger().debug(f"⏸️ Duplicate destination hash: {new_hash[:8]}")
                     return
 
-                # 5️⃣ 異常な重複回数チェック
+                # 処理カウント管理
                 if new_hash not in self.destination_processing_count:
                     self.destination_processing_count[new_hash] = 0
 
+                # 🆕 タイムスタンプ記録
+                self.destination_timestamp[new_hash] = time.time()
+
                 self.destination_processing_count[new_hash] += 1
 
+                # 異常な重複回数チェック
                 if self.destination_processing_count[new_hash] > 3:
                     self.get_logger().error(
                         f"🚨 無限ループ検知! Hash {new_hash[:8]} が "
@@ -383,21 +412,18 @@ class Phase2FirebaseBridge(Node):
                     )
                     return
 
-                # 6️⃣ 新しいdestinationとして処理
                 self.last_processed_destination_hash = new_hash
 
                 self.get_logger().info(
                     f"🎯 New destination: ({destination.latitude:.6f}, {destination.longitude:.6f}) "
-                    f"[Hash: {new_hash[:8]}]"
+                    f"[Hash: {new_hash[:8]}, Count: {self.destination_processing_count[new_hash]}]"
                 )
 
-            # 7️⃣ Nav2準備状態を確認
             if not self.nav2_ready:
                 self.get_logger().warning("⏳ Nav2 not ready yet - Destination queued")
                 self.pending_destination = destination
                 return
 
-            # 8️⃣ ナビゲーションゴール送信
             self.send_navigation_goal(destination)
 
         except Exception as e:
@@ -408,14 +434,12 @@ class Phase2FirebaseBridge(Node):
         try:
             self.processing_navigation = True
 
-            # Nav2準備確認
             if not self.nav2_ready:
                 self.get_logger().warning("⏳ Nav2 not ready - Queuing destination")
                 self.pending_destination = destination
                 self.processing_navigation = False
                 return
 
-            # ゴール有効性検証
             is_valid, error_msg = self.coordinate_converter.validate_goal(
                 destination.latitude, destination.longitude
             )
@@ -423,7 +447,6 @@ class Phase2FirebaseBridge(Node):
             if not is_valid:
                 self.get_logger().error(f"❌ Invalid goal: {error_msg}")
 
-                # 最も近い安全な座標に補正
                 safe_goal = self.coordinate_converter.get_safe_goal_near(
                     destination.latitude, destination.longitude
                 )
@@ -439,16 +462,13 @@ class Phase2FirebaseBridge(Node):
                     destination.latitude, destination.longitude, frame_id='map'
                 )
 
-            # RViz用にゴールをパブリッシュ
             self.goal_publisher.publish(goal_pose)
 
-            # Nav2アクションサーバーに接続
             if not self.nav_action_client.wait_for_server(timeout_sec=5.0):
                 self.get_logger().error("❌ Nav2 action server not available")
                 self.get_logger().error("   💡 確認: ros2 action list で /navigate_to_pose が表示されるか確認")
                 self.processing_navigation = False
 
-                # Firebaseのステータスを更新
                 self.firebase_client.update_robot_state(
                     self.robot_id,
                     {
@@ -458,7 +478,6 @@ class Phase2FirebaseBridge(Node):
                 )
                 return
 
-            # ゴール送信
             goal_msg = NavigateToPose.Goal()
             goal_msg.pose = goal_pose
 
@@ -489,7 +508,6 @@ class Phase2FirebaseBridge(Node):
                 self.navigation_active = False
                 self.processing_navigation = False
 
-                # Firebaseステータス更新
                 self.firebase_client.update_robot_state(
                     self.robot_id,
                     {
@@ -527,7 +545,6 @@ class Phase2FirebaseBridge(Node):
             else:
                 self.get_logger().warning(f"⚠️ Navigation failed with status: {status}")
 
-            # 🚨 destinationを削除してループ防止
             with self.destination_lock:
                 self.firebase_client.update_robot_state(
                     self.robot_id,
@@ -537,7 +554,6 @@ class Phase2FirebaseBridge(Node):
                     }
                 )
 
-                # 処理状態をリセット
                 self.navigation_active = False
                 self.current_goal = None
                 self.goal_handle = None
@@ -591,23 +607,18 @@ class Phase2FirebaseBridge(Node):
                 'y': msg.pose.pose.position.y
             }
 
-            # 速度計算
             speed = math.sqrt(
                 msg.twist.twist.linear.x**2 + msg.twist.twist.linear.y**2
             )
 
-            # 動的な更新間隔決定
-            is_moving = speed > 0.05  # 0.05 m/s以上で移動中と判定
+            is_moving = speed > 0.05
             update_interval = self.update_interval_moving if is_moving else self.update_interval_idle
 
-            # 時間ベースのレート制限
             time_since_update = current_time - self.last_position_update_time
             if time_since_update < update_interval:
-                # 速度情報だけ更新
                 self.sensor_aggregator.update_motion_state(speed)
                 return
 
-            # 移動距離ベースのチェック
             should_update = False
 
             if self.last_published_position is None:
@@ -623,16 +634,13 @@ class Phase2FirebaseBridge(Node):
                         f"📍 Moved {distance:.2f}m (threshold: {self.position_threshold}m)"
                     )
 
-            # 位置更新実行
             if should_update:
                 self.state_tracker.update_from_odom(self.robot_id, msg)
                 self.last_position_update_time = current_time
                 self.last_published_position = current_position
 
-            # センサー情報は常に更新
             self.sensor_aggregator.update_motion_state(speed)
 
-            # ナビゲーション状態更新
             if self.current_goal and self.navigation_active:
                 current_pose = PoseStamped()
                 current_pose.pose = msg.pose.pose
@@ -667,6 +675,9 @@ class Phase2FirebaseBridge(Node):
         """クリーンシャットダウン"""
         try:
             self.get_logger().info("🛑 Shutting down Phase 2 Bridge")
+
+            if self.cleanup_timer:
+                self.cleanup_timer.cancel()
 
             if self.firebase_client:
                 self.firebase_client.close_listeners()

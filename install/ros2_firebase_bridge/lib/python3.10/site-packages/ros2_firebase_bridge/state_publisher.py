@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smart State Publisher - Web側マーカー同期完全版
+Smart State Publisher - Web側マーカー同期完全版（閾値統一版）
 """
 
 import time
@@ -16,6 +16,8 @@ class StatePublisher:
     """
     Manages publishing robot state to Firebase with intelligent filtering
     to prevent infinite update loops.
+
+    🆕 Phase 2改善: 位置閾値を0.5mに統一（firebase_bridge_nodeと一致）
     """
 
     def __init__(self, firebase_client, coordinate_converter, logger):
@@ -27,13 +29,20 @@ class StatePublisher:
         self.min_update_interval = 1.0  # seconds
         self.last_update_time = {}
 
-        # Delta threshold: Only update if robot moved significantly
-        self.position_threshold = 0.1  # meters (10cm)
+        # 🆕 Delta threshold: 0.5m に統一（firebase_bridge_node.py と一致）
+        self.position_threshold = 0.5  # meters (50cm) - 変更前: 0.1m
         self.heading_threshold = 0.1  # radians (~5.7 degrees)
         self.last_published_state = {}
 
         # デバッグ用カウンター
         self.update_count = {}
+
+        self.logger.info(
+            f"🎯 StatePublisher initialized with thresholds:\n"
+            f"   Position: {self.position_threshold}m\n"
+            f"   Heading: {self.heading_threshold}rad\n"
+            f"   Min interval: {self.min_update_interval}s"
+        )
 
     def should_publish_update(self, robot_id: str, new_position: Dict,
                               new_heading: float) -> bool:

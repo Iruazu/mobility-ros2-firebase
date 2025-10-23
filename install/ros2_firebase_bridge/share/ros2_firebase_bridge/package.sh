@@ -78,10 +78,11 @@ _colcon_package_sh_source_script() {
 }
 
 # source sh hooks
+_colcon_package_sh_source_script "$COLCON_CURRENT_PREFIX/share/ros2_firebase_bridge/hook/cmake_prefix_path.sh"
 _colcon_package_sh_source_script "$COLCON_CURRENT_PREFIX/share/ros2_firebase_bridge/hook/path.sh"
 _colcon_package_sh_source_script "$COLCON_CURRENT_PREFIX/share/ros2_firebase_bridge/hook/pythonpath.sh"
 _colcon_package_sh_source_script "$COLCON_CURRENT_PREFIX/share/ros2_firebase_bridge/hook/pythonscriptspath.sh"
-_colcon_package_sh_source_script "$COLCON_CURRENT_PREFIX/share/ros2_firebase_bridge/hook/ament_prefix_path.sh"
+_colcon_package_sh_source_script "$COLCON_CURRENT_PREFIX/share/ros2_firebase_bridge/local_setup.sh"
 
 unset _colcon_package_sh_source_script
 unset COLCON_CURRENT_PREFIX
