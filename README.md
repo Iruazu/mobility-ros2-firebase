@@ -1,3 +1,4 @@
+⚠️ Work in Progress — This repository is under continuous update
 # ROS2 Firebase Bridge for Personal Mobility Platform
 
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue.svg)](https://docs.ros.org/en/humble/)
