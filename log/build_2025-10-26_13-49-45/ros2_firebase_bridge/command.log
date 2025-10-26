@@ -1,0 +1,4 @@
+Invoking command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge -- -j18 -l18
+Invoked command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge -- -j18 -l18
+Invoking command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge
+Invoked command in '/workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /workspaces/mobility-ros2-firebase/build/ros2_firebase_bridge
