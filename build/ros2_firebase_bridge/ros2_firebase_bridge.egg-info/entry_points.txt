@@ -1,4 +1,0 @@
-[console_scripts]
-firebase_bridge = ros2_firebase_bridge.firebase_bridge_node:main
-test_tools = ros2_firebase_bridge.test_tools:main
-
