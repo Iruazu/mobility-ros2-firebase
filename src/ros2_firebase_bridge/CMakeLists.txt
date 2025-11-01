@@ -14,13 +14,21 @@ find_package(rclpy REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
 
 # 実行ファイルのインストール
-# lib/<package_name>/ にインストールすることで ros2 run が認識可能
 install(PROGRAMS
   scripts/firebase_bridge
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# テストの設定
+# 🔽🔽 これを追加 🔽🔽
+# Launch, Config, Worlds フォルダをインストール対象に含める
+install(DIRECTORY
+  launch
+  config
+  worlds
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# テスト設定
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

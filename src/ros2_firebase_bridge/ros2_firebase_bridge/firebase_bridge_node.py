@@ -120,9 +120,12 @@ class Phase2FirebaseBridge(Node):
 
     def get_default_config(self) -> Dict[str, Any]:
         """デフォルト設定"""
+        import os
+        home = os.path.expanduser('~')
+
         return {
             'firebase': {
-                'service_account_key': '/workspace/config/serviceAccountKey.json'
+                'service_account_key': os.path.join(home, 'mobility-ros2-firebase/config/serviceAccountKey.json')
             },
             'ros2': {
                 'robot_namespace': self.robot_namespace,

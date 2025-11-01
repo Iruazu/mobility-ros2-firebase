@@ -1,3 +1,32 @@
 # Gitの追跡対象から外すファイルやディレクトリを記述します
 # 秘密情報ファイル
 config/serviceAccountKey.json
+# ROS2ビルドファイル
+build/
+install/
+log/
+
+# Python関連
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+
+# エディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# Firebase秘密鍵
+config/serviceAccountKey.json

@@ -1,87 +1,83 @@
 #!/usr/bin/env python3
-"""
-Phase 2 Minimal Gazebo Launch File - 修正版
-軽量なシミュレーション環境でFirebase Bridgeを起動
-AMCL + Map Server + Nav2の完全なスタック
-"""
+# -*- coding: utf-8 -*-
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, ExecuteProcess, TimerAction
+from launch.actions import IncludeLaunchDescription, TimerAction, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
 import os
+import sys
 
+def must_exist(path: str, label: str) -> str:
+    if not os.path.exists(path):
+        print(f"[FATAL] {label} not found: {path}", file=sys.stderr)
+        raise FileNotFoundError(path)
+    return path
 
 def generate_launch_description():
-    """
-    完全なNav2スタック + Firebase Bridge を起動
-
-    修正内容:
-    - TurtleBot3の標準launchファイルを使用
-    - AMCL + Map Server を含む完全なNav2スタック
-    - Firebase Bridgeを遅延起動
-    """
-
-    # パッケージパスを取得
-    pkg_ros2_firebase_bridge = FindPackageShare('ros2_firebase_bridge')
-    pkg_turtlebot3_gazebo = FindPackageShare('turtlebot3_gazebo')
-    pkg_turtlebot3_navigation2 = FindPackageShare('turtlebot3_navigation2')
-
-    # ===== 環境変数設定 =====
-    turtlebot3_model = os.environ.get('TURTLEBOT3_MODEL', 'waffle')
-
-    # ===== TurtleBot3 Gazebo World 起動 =====
-    gazebo_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                pkg_turtlebot3_gazebo,
-                'launch',
-                'turtlebot3_world.launch.py'
-            ])
-        ])
+    # --- 必須ファイル絶対パス ---
+    gazebo_launch_py = must_exist(
+        "/opt/ros/humble/share/turtlebot3_gazebo/launch/turtlebot3_world.launch.py",
+        "Gazebo launch"
+    )
+    nav2_launch_py = must_exist(
+        "/opt/ros/humble/share/turtlebot3_navigation2/launch/navigation2.launch.py",
+        "Nav2 launch"
+    )
+    map_yaml = must_exist(
+        "/opt/ros/humble/share/turtlebot3_navigation2/map/map.yaml",
+        "Map YAML"
+    )
+    params_file = must_exist(
+        "/opt/ros/humble/share/turtlebot3_navigation2/param/burger.yaml",
+        "Nav2 params_file"
     )
 
-    # ===== TurtleBot3 Navigation2 起動 (AMCL + Map Server 含む) =====
-    navigation2_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                pkg_turtlebot3_navigation2,
-                'launch',
-                'navigation2.launch.py'
-            ])
-        ]),
+    # --- TurtleBot3のモデル固定 ---
+    set_tb3_model = SetEnvironmentVariable(name="TURTLEBOT3_MODEL", value="burger")
+
+    # --- Gazebo 起動 ---
+    gazebo_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(gazebo_launch_py)
+    )
+
+    # --- Navigation2 起動 ---
+    nav2_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(nav2_launch_py),
         launch_arguments={
-            'use_sim_time': 'true',
+            "use_sim_time": "true",
+            "map": map_yaml,
+            "params_file": params_file
         }.items()
     )
 
-    # ===== Firebase Bridge起動 (15秒遅延) =====
-    # Nav2が完全に起動するまで待機
+    # --- Firebase Bridge 起動 ---
+    firebase_service_account = "/home/obana/mobility-ros2-firebase/config/serviceAccountKey.json"
+    must_exist(firebase_service_account, "Firebase Service Account")
+
     firebase_bridge = TimerAction(
-        period=15.0,
+        period=15.0,  # Nav2安定後に起動
         actions=[
             Node(
-                package='ros2_firebase_bridge',
-                executable='firebase_bridge',
-                name='firebase_bridge',
+                package="ros2_firebase_bridge",
+                executable="firebase_bridge",
+                name="firebase_bridge",
+                output="screen",
                 parameters=[{
-                    'robot_id': 'robot_001',
-                    'robot_namespace': '/turtlebot3'
+                    "robot_id": "robot_001",
+                    "robot_namespace": "/turtlebot3",
+                    "service_account_path": firebase_service_account
                 }],
-                output='screen'
+                env={
+                    "GOOGLE_APPLICATION_CREDENTIALS": firebase_service_account
+                }
             )
         ]
     )
 
     return LaunchDescription([
-        # Gazebo World (TurtleBot3標準)
+        set_tb3_model,
         gazebo_launch,
-
-        # Navigation2 (AMCL + Map Server含む)
-        navigation2_launch,
-
-        # Firebase Bridge (遅延起動)
+        nav2_launch,
         firebase_bridge,
     ])
