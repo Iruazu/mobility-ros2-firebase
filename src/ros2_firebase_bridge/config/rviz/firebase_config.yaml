@@ -9,24 +9,30 @@ ros2:
   status_topic: "/robot_status"
 
 coordinate_system:
-  origin_latitude: 36.55077
-  origin_longitude: 139.92957
+  # 宇都宮大学陽東キャンパス 7号館西前
+  origin_latitude: 36.5513
+  origin_longitude: 139.9286
+
+  # 1:1スケール（GPS距離 = マップ距離）
+  scale_factor: 1.0
+  # フレーム設定
   map_frame: "map"
   base_frame: "base_link"
-  scale_factor: 0.01
+
+  # マップ範囲（200m × 200m）
   map_bounds:
-    x_min: -4.0
-    x_max: 4.0
-    y_min: -4.0
-    y_max: 4.0
+    x_min: -100.0
+    x_max: 100.0
+    y_min: -100.0
+    y_max: 100.0
 
 navigation:
-  goal_tolerance: 0.3
-  navigation_timeout: 300
+  goal_tolerance: 0.5
+  navigation_timeout: 600
   max_retries: 3
   retry_delay: 5.0
 
 telemetry:
-  update_interval: 2.0
-  position_update_interval: 2.0
+  update_interval: 0.5
+  position_update_interval: 0.5
   sensor_update_interval: 1.0

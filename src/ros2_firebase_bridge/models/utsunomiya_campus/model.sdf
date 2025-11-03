@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="utsunomiya_campus">
+    <static>true</static>
+    <link name="link">
+      
+      <!-- 視覚表示のみ（衝突判定なし、動作確認用） -->
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://utsunomiya_campus/utunomiya-yoto7.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.7 0.7 0.7 1</ambient>
+          <diffuse>0.8 0.8 0.8 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+      
+    </link>
+  </model>
+</sdf>

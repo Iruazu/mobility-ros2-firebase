@@ -6,18 +6,21 @@ package_name = 'ros2_firebase_bridge'
 
 setup(
     name=package_name,
-    version='0.0.2',  # Phase 2対応でバージョンアップ
-    packages=[package_name],
+    version='0.0.2',
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
 
-        # ===== Phase 2: Launch files =====
+        # ===== Scripts (実行可能ファイル) =====
+        (os.path.join('lib', package_name), glob('scripts/*')),
+
+        # Launch files
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
 
-        # ===== Phase 2: World files =====
+        # World files
         (os.path.join('share', package_name, 'worlds'),
             glob('worlds/*.world')),
 
@@ -29,7 +32,7 @@ setup(
         (os.path.join('share', package_name, 'maps'),
             glob('maps/*.pgm') + glob('maps/*.yaml')),
 
-        # Models (yoto7.dae)
+        # Models
         (os.path.join('share', package_name, 'models', 'yoto_campus'),
             glob('models/yoto_campus/*')),
 
@@ -46,13 +49,14 @@ setup(
     zip_safe=True,
     maintainer='Developer',
     maintainer_email='developer@mobility.com',
-    description='Firebase-ROS2 Bridge for Personal Mobility Platform - Phase 2',
+    description='Firebase-ROS2 Bridge for Personal Mobility Platform',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'firebase_bridge = ros2_firebase_bridge.firebase_bridge_node:main',
-            'test_tools = ros2_firebase_bridge.test_tools:main',  # 追加（存在する場合）
+            'firebase_bridge = ros2_firebase_bridge.firebase_bridge:main',
+            'firebase_bridge_multi = ros2_firebase_bridge.firebase_bridge_multi:main',
+            'simple_goal_navigator = ros2_firebase_bridge.simple_goal_navigator:main',
         ],
     },
 )

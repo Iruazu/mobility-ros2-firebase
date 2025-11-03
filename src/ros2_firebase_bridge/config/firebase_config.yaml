@@ -1,0 +1,9 @@
+firebase:
+  service_account_key: "/home/obana/mobility-ros2-firebase/src/ros2_firebase_bridge/config/serviceAccountKey.json"
+  database_url: "https://mobility-map-ae58e-default-rtdb.asia-southeast1.firebasedatabase.app/"
+
+map:
+  origin:
+    latitude: 36.5546169518534
+    longitude: 139.87190842628479
+  scale: 111320.0

@@ -16,10 +16,11 @@ ament_python_install_package(${PROJECT_NAME})
 # 実行ファイルのインストール
 install(PROGRAMS
   scripts/firebase_bridge
+  scripts/firebase_bridge_multi
+  scripts/simple_goal_navigator
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# 🔽🔽 これを追加 🔽🔽
 # Launch, Config, Worlds フォルダをインストール対象に含める
 install(DIRECTORY
   launch
