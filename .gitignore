@@ -27,6 +27,3 @@ dist/
 # OS関連
 .DS_Store
 Thumbs.db
-
-# Firebase秘密鍵
-config/serviceAccountKey.json
