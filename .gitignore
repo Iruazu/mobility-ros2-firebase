@@ -1,6 +1,6 @@
 # Gitの追跡対象から外すファイルやディレクトリを記述します
 # 秘密情報ファイル
-config/serviceAccountKey.json
+src/ros2_firebase_bridge/config/serviceAccountKey.json
 # ROS2ビルドファイル
 build/
 install/
