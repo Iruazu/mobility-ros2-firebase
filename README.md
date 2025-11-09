@@ -13,10 +13,18 @@
 This repository presents an experimental platform for **real-time autonomous mobility dispatch and control**, integrating **ROS2 Humble**, **Firebase (Firestore & Realtime Database)**, and **Gazebo simulation**.  
 The system enables cloud-based goal distribution to simulated robots — bridging the gap between physical robotics and cloud infrastructure.
 
-### Purpose
-- Demonstrate bidirectional communication between **cloud services (Firebase)** and **robotics middleware (ROS2)**  
-- Validate GPS-to-simulation coordinate conversion for real-world deployment  
-- Build a foundation for **fleet-management systems** in personal-mobility applications  
+### System Overview Diagram
+
+<p align="center">
+  <img src="docs/architecture-diagram.png" width="700" alt="ROS2–Firebase System Architecture"/>
+</p>
+
+**Figure:** Conceptual architecture of the ROS2–Firebase Mobility Platform.  
+It visualizes the bidirectional communication flow between the **Web UI (React + Maps)**,  
+**Firebase (Firestore + RTDB)**, and **ROS2 Node (Gazebo / cmd_vel)**.  
+This structure underpins real-time dispatching, simulation control, and data synchronization.
+
+> _Connecting robotics and cloud — building mobility systems for the next generation._
 
 ---
 
@@ -166,7 +174,7 @@ Ultimately, I hope to contribute to **global R&D and system innovation** within 
 |**v0.2**|Multi-robot support; infinite-loop prevention (hash-based)|Docker + Nav2|
 |**v0.3**|Ubuntu-native migration; Nav2-free design; custom campus model|Ubuntu 22.04 (native)|
 
-_See [`README_legacy.md`](https://chatgpt.com/g/g-p-68cfdd0a2f4481919b719ea34cbc603d-my-career/c/README_legacy.md) for the historical Docker implementation._
+_See [`README_legacy.md`](https://github.com/Iruazu/mobility-ros2-firebase/blob/main/docs/README_legacy.md) for the historical Docker implementation._
 
 ---
 
@@ -246,7 +254,7 @@ This project is more than a codebase — it is my bridge between learning and co
 
 - **LinkedIn:** [yugo-dev](https://www.linkedin.com/in/yugo-dev)
 - **GitHub Issues:** [Feedback & feature requests](https://github.com/Iruazu/mobility-ros2-firebase/issues)
-- **Documentation:** [`README_current.md`](https://chatgpt.com/g/g-p-68cfdd0a2f4481919b719ea34cbc603d-my-career/c/README_current.md) | [`README_legacy.md`](https://chatgpt.com/g/g-p-68cfdd0a2f4481919b719ea34cbc603d-my-career/c/README_legacy.md) | `docs/ARCHITECTURE.md` _(coming soon)_
+- **Documentation:** [`README_current.md`](https://github.com/Iruazu/mobility-ros2-firebase/blob/main/docs/README_current.md) | [`README_legacy.md`](https://github.com/Iruazu/mobility-ros2-firebase/blob/main/docs/README_legacy.md) | `docs/ARCHITECTURE.md` _(coming soon)_
     
 
 **External References**
