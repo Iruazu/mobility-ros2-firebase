@@ -1,3 +1,4 @@
+#旧Docker環境
 firebase:
   service_account_key: "/home/obana/mobility-ros2-firebase/config/serviceAccountKey.json"
   database_url: "https://mobility-map-ae58e.firebaseio.com"
