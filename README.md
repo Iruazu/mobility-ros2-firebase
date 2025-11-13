@@ -267,7 +267,7 @@ This project is more than a codebase — it is my bridge between learning and co
 
 ## 📜 License
 
-Licensed under the **Apache License 2.0** — see [`LICENSE`](https://chatgpt.com/g/g-p-68cfdd0a2f4481919b719ea34cbc603d-my-career/c/LICENSE) for details.  
+Licensed under the **Apache License 2.0** — see [`LICENSE`]() for details.  
 Chosen for its permissive use, explicit patent grant, and compatibility with both open-source and commercial projects.
 
 ---
